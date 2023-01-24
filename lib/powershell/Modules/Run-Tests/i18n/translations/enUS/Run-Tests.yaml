@@ -1,0 +1,6 @@
+error:
+  test_fail: "$TestName - FAIL"
+info:
+  running_test: "Running $TestName"
+  test_command: "TestCommand is $TestCommand"
+  test_pass: "$TestName - PASS"

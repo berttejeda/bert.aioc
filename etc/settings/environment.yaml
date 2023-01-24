@@ -1,0 +1,8 @@
+cloned_functions: []
+ModernPS: <%= $PSVersionTable.PSVersion -ge '3.0' %>
+default:
+  path: <%= (Get-Item "$($Settings.defaults.ExamplesInfrastructureFolderName)\$($Settings.defaults.EnvironmentFolderName)\$($Settings.defaults.environment)").FullName %>
+  name: <%= $Settings.defaults.environment %>  
+current: 
+  path: <%= (Get-Item "$($Settings.defaults.ExamplesInfrastructureFolderName)\$($Settings.defaults.EnvironmentFolderName)\$($Settings.defaults.environment)").FullName %>
+  name: <%= $Settings.defaults.environment %>

@@ -1,0 +1,17 @@
+aio_vm_name: aio-vm.local.net
+host_adapter: "VirtualBox Host-Only Ethernet Adapter"
+images_path: <%= $APP_DIR %>\.images
+VboxManageEXEName: vboxmanage.exe
+VboxManagePath: <%= if (-not $isLinux) {
+  $env:PROGRAMFILES + '\Oracle\VirtualBox\vboxmanage.exe' } else { 'VBoxManage'  }
+  %>
+vhd_archive: vhd.tar
+virtualbox_vms_folder: <%= $env:USERPROFILE %>\VirtualBox VMs
+shared_folders:
+  prefix: sf
+  mountpath: /media
+  program_dir_name: PROGRAM_DIR
+timeouts: # seconds
+  shutdown: 10 # max time to wait for machine shutdown 
+  connect: 30 # max time to wait for machine cli connection
+  start: 10 # max time to wait for machine start

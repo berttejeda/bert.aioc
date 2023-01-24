@@ -1,0 +1,4 @@
+error:
+  start: "Failed to start $($MachineObj.name)"
+info:
+  resume: "$($MachineObj.name) is paused ... resuming ..."

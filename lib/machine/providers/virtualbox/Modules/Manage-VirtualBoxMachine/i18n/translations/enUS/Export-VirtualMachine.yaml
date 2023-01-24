@@ -1,0 +1,4 @@
+error:
+  failed: "Failed to export $($MachineObj.name)"
+info:
+  exporting: "Exporting $($MachineObj.name) as $($MachineObj.name).ova" 

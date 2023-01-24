@@ -1,0 +1,5 @@
+info:
+  heartbeat: "HeartBeatCMD is $($HeartBeatCMD -Join(' '))"
+  wait:
+    available: "Waiting for CLI Access to be available ... "
+    unavailable: "Waiting for CLI Access to be unavailable ... "

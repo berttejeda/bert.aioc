@@ -1,0 +1,6 @@
+info:
+  auth: 
+    payload: "Auth Payload: $AuthPayload"
+    uri: "Auth URI: $URI"
+    response: "Raw Response: $AuthResponse"
+    token: "Auth Token: $AuthToken"

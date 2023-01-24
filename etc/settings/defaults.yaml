@@ -1,0 +1,37 @@
+aio_machine_name: aio-vm.local.net
+debug: False
+locale: enUS
+environment: local.net
+aiomachine: aio-vm.local.net
+ansible:
+  dir: ansible
+  files: files
+  DynamicInventory: inventory.py
+ExamplesInfrastructureFolderName: examples
+InfrastructureFolderName: infrastructure
+EnvironmentFolderName: environments
+global_init_dirs:
+  - <%= $env:USERPROFILE %>\.aio.lab\lib\machine\providers
+infraio_workdir: <%= $env:USERPROFILE %>\.aio.lab
+machine_provider: virtualbox
+paths:
+  - <%= $APP_DIR %>\bin
+  - C:\Python36
+  - C:\Python36\Scripts
+  - C:\Python27
+  - C:\Python27\Scripts  
+  - C:\Progra~1\Git\bin
+  - C:\Progra~2\Git\bin
+  - <%= $env:PATH %>
+res_path: <%= $APP_DIR %>\res
+ssh: <%= $APP_DIR %>\bin\ssh.exe
+tests_file: <%= if (-not $isLinux) {
+    "$PWD\\tests\\virtualbox\\virtualbox.yaml"
+  } else {
+    "$PWD/tests/virtualbox/virtualbox.yaml"
+  }
+  %>
+user_overrides_dirs: 
+  - <%= $env:USERPROFILE %>\.aioc\etc\settings
+  - <%= $env:HOME %>/.aioc/etc/settings
+...

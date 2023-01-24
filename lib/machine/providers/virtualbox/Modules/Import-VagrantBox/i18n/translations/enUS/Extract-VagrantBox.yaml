@@ -1,0 +1,11 @@
+error:
+  extracting: "Error in extracting $TargetBox"
+info:
+  exracting: "Extracting box contents ..."
+  targetbox: "Target Box File is $TargetBox"
+  command: "Extraction command is &bin\\7z.exe $($ProcessArgs -Join(' '))"
+  success: "Extraction Successful"
+  remove: 
+    box: "Removing box file $TargetBox"
+    intermediate: "Removing box file $TargetBox"
+  intermediate: "Attempting to extract any intermediate archives ..."

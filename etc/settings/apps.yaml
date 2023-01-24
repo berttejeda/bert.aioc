@@ -1,0 +1,5 @@
+choco:
+  path: <%= (Get-Command choco -ErrorAction SilentlyContinue).source %>
+sublime:
+  path: <%= $APP_DIR %>\apps\Sublime Text\sublime_text.exe
+  launcher: <%= $APP_DIR %>\apps\Sublime Text\sublime_text.exe -w --command 'toggle_sidebar'

@@ -1,0 +1,2 @@
+error:
+  not_registered: "$MachineName is not registered ..."

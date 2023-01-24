@@ -1,0 +1,5 @@
+info:
+  guestcontrol: "UseGuestControl: $UseGuestControl"
+  heartbeat: "HeartBeatCMD is $($HeartBeatCMD -Join(' '))"
+  wait:
+    available: "Waiting for Shared Folder Access ..."

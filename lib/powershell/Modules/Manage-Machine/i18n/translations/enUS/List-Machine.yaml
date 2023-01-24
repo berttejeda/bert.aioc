@@ -1,0 +1,2 @@
+error:
+  no_provider: "No valid machine provider found ... expected vars.provider.type matching any of '$($Settings.machine.providers.available)'"

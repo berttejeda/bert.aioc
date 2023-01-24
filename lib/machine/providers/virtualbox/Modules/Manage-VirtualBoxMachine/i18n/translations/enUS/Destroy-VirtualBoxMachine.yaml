@@ -1,0 +1,2 @@
+error:
+  destroy: "Failed to destroy $($MachineObj.name)"

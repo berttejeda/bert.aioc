@@ -1,0 +1,2 @@
+warn:
+  logfile_dne: "The logfile for the specified machine does not exist"

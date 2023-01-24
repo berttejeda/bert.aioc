@@ -1,0 +1,4 @@
+environment_dir: "{{ (ansible_inventory_sources | select('match', '.*inventory.sh.*') | list | first | default('')).split('/')[0:-1]|join('/') }}"
+environments_dir: "{{ environment_dir.split('/')[0:-1]|join('/') }}"
+containers_dir: "{{ environments_dir.split('/')[0:-1]|join('/') + '/infrastructure/containers' }}"
+machine_domain: "{{ environment_dir.split('/')[-1] }}"

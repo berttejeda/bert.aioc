@@ -1,0 +1,7 @@
+error:
+ provider: 
+  missing: "Missing machine provider for $($MachineObj.name) ... expected vars.provider.type matching any of '$($Settings.machine.providers.available)'"
+  mismatch: "Machine provider type does not match '$MyProviderType', skipping $($MachineObj.name) ..."
+info:
+  provider: 
+    type: "$($MachineObj.Name)`: machine provider type $MachineProviderType"

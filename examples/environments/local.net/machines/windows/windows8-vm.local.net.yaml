@@ -1,0 +1,84 @@
+---
+- hosts: windows8-vm.local.net
+  gather_facts: true
+  become: true
+  vars:
+    type: virtual-machine
+    os: windows
+    auto_start: false
+    auto_provision: true
+    required_parameters:
+    optional_parameters:
+      --debug-mode: debug_mode ## Enable debug mode
+    help:
+      message: |
+        Invoke windows8-vm.local.net machine playbook
+    inventory: |
+      [win-hosts]
+      windows8-vm.local.net type=lxd_host ansible_connection=local 
+    config:
+      os_type: Windows81_64
+      box: jhakonen/windows-10-n-pro-en-x86_64
+      hostname: <%= $VMDefinitionFile.BaseName %>
+    desktop: false
+    virtual_interfaces:
+      - name: eth1
+        ip: 192.168.56.201
+        mask: 255.255.255.0
+        auto_config: true
+        method: 'private_network'
+        dns:
+          aliases:
+            - win8
+    provider:
+      type: virtualbox
+      virtualbox:
+        modifyvm:
+          name: <%= $VMDefinitionFile.BaseName %>
+          natdnshostresolver1: 'on'
+          cpus: 2
+          memory: 4096
+          vram: 16
+        setextradata:
+          VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root: 1
+    shared_folders:
+      - name: Documents
+        host_path: <%= $env:USERPROFILE  %>\Documents
+      - name: Downloads
+        host_path: <%= $env:USERPROFILE  %>\Downloads
+      - name: git
+        host_path: <%= $env:USERPROFILE  %>\git
+      - name: workspace
+        host_path: <%= $env:USERPROFILE  %>\Documents\workspace
+      - name: machine_dir
+        host_path: <%= $VMMachineDir %>
+  tasks:
+    - name: Add user tomtester
+      win_user:
+        name: tomtester
+        password: ThisIsATest@
+        state: present
+        groups:
+        - Administrators
+    - name: Install packages
+      win_chocolatey:
+        name:
+          - cmder
+          - golang
+          - git
+          - google.chrome
+          - miniconda
+          - packer
+          - ruby
+          - sublimetext3
+          - javaruntime         
+          - vagrant
+          - virtualbox
+          - adobereader
+          - MikTex
+          - pdflatex
+          - locate32
+          - pandoc
+    - name: Done
+      debug:
+        msg: Done!

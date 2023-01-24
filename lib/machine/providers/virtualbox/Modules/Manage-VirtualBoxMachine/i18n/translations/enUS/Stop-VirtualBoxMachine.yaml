@@ -1,0 +1,2 @@
+error:
+  failed: "Failed to stop $($MachineObj.name)"

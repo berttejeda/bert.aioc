@@ -1,0 +1,14 @@
+error:
+  restart:
+    generic: "Could not restart $($VBoxService.Name) - error was $ErrRestart"
+    exception: "Could not restart $($VBoxService.Name) - error was $($_.Exception.Message)"
+    proc:
+      generic: "Could not stop $($VBoxProcess.Name) - error was $ErrRestart"
+      exception: "Could not stop $($VBoxProcess.Name) - error was $($_.Exception.Message)"
+info:
+  restart: 
+    service: "Restarting $($VBoxService.Name)"
+    proc: 
+      restarting: "Restarting process for $($VBoxProcess.Name)"
+      success: "Successfully Stopped $($VBoxProcess.Name)"
+    success: "Successfully restarted $($VBoxService.Name)"

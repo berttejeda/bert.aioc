@@ -1,0 +1,390 @@
+- name: Initialize Task Variables
+  command: |-
+    $Global:VboxManage = If ($virtualbox.defaults.VboxManagePath) {$virtualbox.defaults.VboxManagePath} Else {"VboxManage.exe"}
+    if (-Not $(Stat-App $VboxManage)) {
+        throw [System.Exception] "$($VboxManage) command not found"
+    }
+    $Global:VboxManageHostAdapter = $virtualbox.defaults.host_adapter
+    $Global:AnsiblePlaybook = $virtualbox.provisioners.ansible.playbooks.post_create
+    $Global:VagrantBox = $MachineObj.vars.config.box
+    if (!$VagrantBox) {
+        throw "Missing box definition for $MachineName - (vars.config.box)"
+    }       
+    $Global:VHDPath = $virtualbox.defaults.images_path
+    Switch ($True) {
+       ($VagrantBox -match '^http')  { $Global:VagrantBoxName = $($VagrantBox -split '/')[-1].split('.')[0];break }
+       ($VagrantBox -match '[\w]+\/[\w]+')  { $Global:VagrantBoxName = $VagrantBox;break }
+       (Test-Path $VagrantBox)  { $Global:VagrantBoxName = (Get-File $VagrantBox).BaseName;break }
+       default { $Global:VagrantBoxName = $VagrantBox }
+    }
+    if ($MachineObj.vars.config.box_download_dir){
+      $Global:VagrantBoxDownloadDirectory = Join-Path "$VHDPath" "$($MachineObj.vars.config.box_download_dir)"
+    } else {
+      $Global:VagrantBoxDownloadDirectory = Join-Path "$VHDPath" "$($VagrantBoxName.ToLower())"
+    }
+  always_run: true
+
+- name: Check for virtual disks ($VagrantBoxDownloadDirectory\*.vmdk)
+  command: |-
+    If (!$(Test-Path  "$VagrantBoxDownloadDirectory\*.vmdk")){
+      Write-Host "$VagrantBoxDownloadDirectory does not exist"
+      Import-VagrantBox -VagrantBox $MachineObj.vars.config.box -DownloadDirectory "$VagrantBoxDownloadDirectory"
+    }
+  fail_msg: Failed to check for virtual hard drives
+  task_phase: poweredoff
+
+- name: Check for machine paths
+  command: |-
+    ForEach ($VMDirectoryObj in @($MachineObj.machine_dir, "$($MachineObj.machine_dir)\containers")){
+        Invoke-Logger "Checking for machine dir $VMDirectoryObj" -Logfiles $MachineObj.logfile
+        try {
+            If (-Not $(Test-Path -Path "$VMDirectoryObj")){
+                Invoke-Logger "Creating machine dir $VMDirectoryObj" -Logfiles $MachineObj.logfile
+                New-Item -ItemType Directory -Path "$VMDirectoryObj" | Out-Null
+            } Else {
+                Invoke-Logger "$VMDirectoryObj already present ... skipping" -Logfiles $MachineObj.logfile
+            }
+        } catch {
+            throw "Failed to create VM Directory Obj - $VMDirectoryObj error was $_"
+            return
+        }
+    }    
+  fail_msg: Failed to check for machine paths
+  task_phase: poweredoff
+
+- name: Close any inaccessible virtual disks
+  command: |-
+    $uuid_pattern = '\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b'
+    $disks = @()
+    $uuids = @()
+    $DiskData = &$virtualbox.defaults.VboxManagePath list hdds | Where-Object{$_ -notmatch "Location"}
+    if ($DiskData){
+        $DiskData = $DiskData.Replace(':',',').Replace(' ','')
+        $DiskData = $DiskData.split(' ')
+        ForEach ($DiskObjPair in $DiskData)
+        {
+            $element=@{}
+            $element= $DiskObjPair.split(",")
+            if ($element[1] -match $uuid_pattern){
+                $uuids = $uuids + $element[1]
+            }
+        }
+        ForEach ($DiskObjPair in $DiskData)
+        {
+            $element=@{}
+            $element= $DiskObjPair.split(",")
+            if ($element[1] -match $uuid_pattern){
+                $uuid = $element[1]
+            }
+            $_disks = @{}
+            if ($element[0]){
+                $_disks.add($uuid,"$($element[0]),$($element[1])")
+                $disks = $disks + $_disks
+            }
+        }
+        ForEach ($uuid in $uuids) { 
+            Close-VirtualBoxDisk $disks.$uuid 
+        }
+    }
+  ignore_errors: true
+  task_phase: poweredoff
+
+- name: Delete any lingering vms of the same name
+  command: |-
+    &$VboxManage unregistervm $($MachineObj.Name) --delete
+  ignore_errors: true
+  task_phase: poweredoff
+
+- name: Clean up any old VM folders
+  command: |-
+    $VM_FOLDER = "$($virtualbox.defaults.virtualbox_vms_folder)\$($MachineObj.Name)"
+    If ($(Test-Path "$VM_FOLDER")){
+        Invoke-Logger "Removing VirtualBox VM Folder $VM_FOLDER" -Logfiles $MachineObj.logfile
+        Remove-Item -Path "$VM_FOLDER" -Recurse
+    }
+  fail_msg: Failed to clean up folders for $($MachineObj.Name)
+  ignore_errors: true
+  task_phase: poweredoff
+
+- name: Create $($MachineObj.Name)
+  command: |-
+    &$VboxManage createvm --name $($MachineObj.Name) --register 
+  fail_msg: Failed to create and register $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Register OS Type
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --ostype $($MachineObj.vars.config.os_type)
+  fail_msg: Failed to register OS Type $($MachineObj.vars.config.os_type) for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Set boot order
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --boot1 disk --boot2 disk --boot3 none --boot4 none
+  fail_msg: Failed to set boot order for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Disable usb
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --usb off --usbehci off
+  fail_msg: Failed to disable USB for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Set machine specs
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --memory $($MachineObj.vars.provider.virtualbox.modifyvm.memory) --vram $($MachineObj.vars.provider.virtualbox.modifyvm.vram) --cpus $($MachineObj.vars.provider.virtualbox.modifyvm.cpus)
+  fail_msg: Failed to set machine specs for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Create HD Controller
+  command: |-
+    &$VboxManage storagectl $($MachineObj.Name) --name 'SATA Controller' --add sata --controller IntelAhci
+  fail_msg: Failed to create HD Controller for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Register Hard Drives
+  command: |-
+    $ControllerPort = 0
+    ForEach ($Source_VHD in $(Get-ChildItem "$VagrantBoxDownloadDirectory\*.vmdk")){
+        If (-Not $(Test-Path $Source_VHD)){
+            throw "Source Disk does not exist - $Source_VHD"
+        }
+        $Dest_VHD = Join-Path -Path $($MachineObj.machine_dir) -ChildPath $($Source_VHD.Name)
+        If (-Not $(Test-Path -Path $Dest_VHD)){
+            Invoke-Logger "Cloning Source Virtual Hard Disk to $($MachineObj.machine_dir)" -Logfiles $MachineObj.logfile
+            &$VboxManage clonemedium disk $Source_VHD $Dest_VHD
+            if ($LASTEXITCODE -ne 0)
+            {
+                throw [System.Exception] "Failed to clone Source Virtual Hard Disk, exit code $LASTEXITCODE"
+            }             
+        }
+        Invoke-Logger "Registering $Source_VHD" -Logfiles $MachineObj.logfile
+        &$VboxManage storageattach $($MachineObj.Name) --storagectl "SATA Controller" --port $ControllerPort --device 0 --type hdd --medium $Dest_VHD
+        $ControllerPort++
+        Invoke-Logger "Verifying Attached virtual drives" -Logfiles $MachineObj.logfile
+        $AttachedDisks = &$virtualbox.defaults.VboxManagePath showvminfo $MachineObj.Name --machinereadable | Select-String -pattern 'vmdk'
+        if (!$AttachedDisks){
+          throw [System.Exception] "No disks have been cloned for $($MachineObj.Name)"
+        }        
+        Invoke-Logger "Virtual Drives are OK!" -Logfiles $MachineObj.logfile
+    }
+  fail_msg: Failed to register Hard Drives for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Configure network interface 1 for $($MachineObj.Name)
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --nic1 nat --nictype1 virtio --cableconnected1 on
+  fail_msg: Failed to configure network interface 1 for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Configure network interface 2 for $($MachineObj.Name)
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --nic2 hostonly --nictype2 82540EM --cableconnected2 on --hostonlyadapter2 $VboxManageHostAdapter
+  fail_msg: Failed to configure network interface 2 for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Configure network interface 3 for $($MachineObj.Name)
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --nic3 hostonly --nictype3 82540EM --cableconnected3 on --hostonlyadapter3 $VboxManageHostAdapter
+  fail_msg: Failed to configure network interface 3 for $($MachineObj.Name)
+  task_phase: poweredoff
+
+# Note:
+# -automount: Specifies that the share will be automatically mounted. 
+# On Linux distributions, this will be to either /media/USER/sf_<name> 
+# or /media/sf_<name>, where <name> is the share named. 
+# The actual location depends on the guest OS.  
+- name: Map default shared folder $APP_DIR
+  command: |-
+    &$VboxManage sharedfolder add $($MachineObj.Name) --name $virtualbox.defaults.shared_folders.program_dir_name --hostpath $APP_DIR --automount
+  fail_msg: Failed to set shared folder $APP_DIR for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Map any additional shared folders
+  command: |-
+    ForEach ($SHARED_Folder in $MachineObj.vars.shared_folders){
+        If (-Not $SHARED_Folder.host_path){continue}
+        If (-Not $(Test-Path -Path $SHARED_Folder.host_path)){
+            Invoke-Logger "Skipping $($SHARED_Folder.host_path) as it does not exist" -Warn -Logfiles $MachineObj.logfile
+        } else {
+            Invoke-Logger "Attempting to map shared folder $($SHARED_Folder.name)" -Logfiles $MachineObj.logfile
+            &$VboxManage sharedfolder add $($MachineObj.Name) --name $($SHARED_Folder.name) --hostpath $($SHARED_Folder.host_path) --automount
+        }
+    }
+  fail_msg: Failed to set at least one shared folder $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Enable Symlinks for Shared Folders
+  command: |-
+    &$VboxManage setextradata $($MachineObj.Name) 'VBoxInternal2/SharedFoldersEnableSymlinksCreate/shared' 1
+  fail_msg: Failed to enable Symlinks for Shared Folders for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Enable DNS Resolver
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --natdnshostresolver1 on
+  fail_msg: Failed to enable DNS Resolver for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Activate DNS Proxy
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --natdnsproxy1 on
+  fail_msg: Failed to activate DNS Proxy for $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Configure SSH Port Mappings
+  command: |-
+    ForEach ($BuildTimeMachineSSHPort in $($virtualbox.ssh.port_range[0]..$virtualbox.ssh.port_range[1] | Sort-Object {Get-Random})){
+      $a = "modifyvm;$($MachineObj.Name);--natpf1;'$($MachineObj.Name)_ssh,tcp,0.0.0.0,$BuildTimeMachineSSHPort,0.0.0.0,22'".split(';')
+      $p = Start-Process -FilePath $VboxManage -ArgumentList $a -NoNewWindow -PassThru -RedirectStandardOutput ".\NUL" -Wait
+      if ($p.ExitCode -eq 0) {
+        Invoke-Logger "Mapped Host SSH port $BuildTimeMachineSSHPort to Guest port 22" -Logfiles $MachineObj.logfile
+        break
+      }
+    }
+  fail_msg: Failed to configure ssh port mappings for $($MachineObj.Name)  
+  task_phase: poweredoff
+
+- name: Configure Any Extra Port Mappings
+  command: |-
+    &$VboxManage modifyvm $($MachineObj.Name) --natdnsproxy1 on
+    ForEach ($PORT_MAPPING in $($MachineObj.vars.port_forwards)){
+      Invoke-Logger "Mapping Host port $($PORT_MAPPING.host) to Guest port $($PORT_MAPPING.guest)" -Logfiles $MachineObj.logfile
+        &$VboxManage modifyvm $($MachineObj.Name) --natpf1 "$($PORT_MAPPING.name),tcp,$($PORT_MAPPING.host_ip),$($PORT_MAPPING.host),$($PORT_MAPPING.guest_ip),$($PORT_MAPPING.guest)"
+    }
+  fail_msg: Failed to configure extra port mappings for $($MachineObj.Name)  
+  task_phase: poweredoff
+
+- name: Start VM
+  command: |-
+    Start-Machine -MachineName $MachineObj -MachineEnvironment $MachineObj.environment
+    $Global:VMachineState = "running"
+  fail_msg: Failed to start Machine - $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Inject ssh public key
+  command: |-
+    if (!$MachineObj.vars.config.ssh.public_key){
+        $ssh_key = $($virtualbox.ssh.public_key)
+        If (!$(Test-path $ssh_key)){
+          throw [System.Exception] "Specified ssh key not found $($MachineObj.vars.config.ssh.public_key)"
+        }
+        switch ($True){
+         ($MachineObj.vars.config.ssh.username -ne '') { $vboxusername = $MachineObj.vars.config.ssh.username }
+         ($MachineObj.vars.config.ssh.password -ne '') { $vboxpassword = $MachineObj.vars.config.ssh.password }
+         default {break;}
+        }
+        Invoke-Logger "Attempting ssh key injection ..." -debug
+        switch ($True) {
+          ($vboxusername -and $vboxpassword) {
+              Invoke-Logger "Virtualbox username and password provided, using these credentials" -debug
+              &$virtualbox.defaults.VboxManagePath guestcontrol $($MachineObj.Name) copyto $ssh_key /home/vagrant/.ssh/authorized_keys --username $vboxusername --password $vboxpassword
+              echo $LASTEXITCODE
+              break
+          }
+          ($vboxusername) {
+              Invoke-Logger "Virtualbox username provided, specifying $vboxusername" -debug
+              &$virtualbox.defaults.VboxManagePath guestcontrol $($MachineObj.Name) copyto $ssh_key /home/vagrant/.ssh/authorized_keys --username $vboxusername
+              echo $LASTEXITCODE
+              break
+          }
+          default {
+              Invoke-Logger "No credentials provided, connecting as root" -debug
+              &$virtualbox.defaults.VboxManagePath guestcontrol $($MachineObj.Name) copyto $ssh_key /home/vagrant/.ssh/authorized_keys --username root
+              echo $LASTEXITCODE
+          }
+        }
+    }
+  fail_msg: Failed to inject insecure public key
+  wait_for_cli_access: true
+  use_guestcontrol: true
+  stream_output: true
+  when: 
+    - "$([System.Convert]::ToBoolean($MachineObj.vars.config.ssh.inject_insecure_key))"
+  task_phase: running
+
+- name: Add vagrant user to vboxsf user group
+  command: |-
+    sudo /usr/bin/gpasswd -a vagrant vboxsf
+  retries: 3
+  delegate_to: guest
+  fail_msg: Failed to add vagrant user to vboxsf user group
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"
+  task_phase: running
+
+- name: Ensure pip is installed ...
+  command: if wget -qO - $($Settings.machine.pip2_url) > /dev/null;then wget -qO - $($Settings.machine.pip2_url) | sudo python;else exit 1;fi
+  delegate_to: guest
+  retries: 3
+  fail_msg: Failed to install desired version of pip
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"
+  task_phase: running
+
+- name: Ensure latest version of python setuptools is installed ...
+  delegate_to: guest
+  retries: 3
+  command: |-
+    $($virtualbox.environment.exports -Join(';'));sudo /usr/bin/env pip install -U setuptools
+  fail_msg: Failed to install desired version of pip
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Ensure latest version of pip wheel is installed ...
+  delegate_to: guest
+  command: |-
+    $($virtualbox.environment.exports -Join(';'));sudo /usr/bin/env pip install -U wheel
+  fail_msg: Failed to install pip wheel
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Ensure desired version of ansible is installed ...
+  command: |-
+    $($virtualbox.environment.exports -Join(';'));sudo /usr/bin/env pip install -U ansible==$($virtualbox.provisioners.ansible.version)
+  delegate_to: guest
+  fail_msg: Failed to install desired version of ansible
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Install latest ansible-tasksrunner
+  command: |-
+    cd $($MachineObj.program_dir) && $($virtualbox.environment.exports -Join(';'));sudo /usr/bin/env pip install -U $($virtualbox.provisioners.ansible.taskrunner_source)
+  delegate_to: guest
+  fail_msg: Failed to install desired version of ansible-taskrunner
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Apply Post-Creation configurations via ansible playbook
+  command: |-
+    cd $($MachineObj.program_dir) && $($virtualbox.environment.exports -Join(';'));$AnsibleVaultArg;DynamicInventorySpec=$($MachineObj.DynamicInventorySpec) /bin/ansible-playbook -i $($MachineObj.InventorySpecPosixPath) $($MachineObj.definition_posix_path) -c local -e environment_folder=$($MachineObj.environment_posix_path) -e additional_ssh_groups=vboxsf -e shared_templates_path='$($MachineObj.environments_posix_path)/templates' -e environment_templates_path=$($MachineObj.environment_posix_path)/templates $AnsibleVaultVarsArg
+  delegate_to: guest
+  fail_msg: Failed to run Post-Creation configurations via ansible
+  wait_for_shared_folders: true
+  vars:
+    AnsibleVaultFileLocalPath: $MachineObj.environment + '\' + $virtualbox.provisioners.ansible.VaultFileName
+    AnsibleVaultFilePath: $MachineObj.environment_posix_path + '/' + $virtualbox.provisioners.ansible.VaultFileName
+    AnsibleLocalFileExists: $(Test-Path $AnsibleVaultFileLocalPath)
+    DerivedAnsibleVaultFilePath: $(If($AnsibleLocalFileExists){$AnsibleVaultFilePath}Else{''})
+    AnsibleVaultArg: $(If($AnsibleLocalFileExists){"export ANSIBLE_VAULT_PASSWORD_FILE=$DerivedAnsibleVaultFilePath"}Else{'echo ...'})
+    AnsibleVaultVarsFileLocalPath: $(Join-Path $MachineObj.environment 'group_vars' $virtualbox.provisioners.ansible.VaultVarsFolderName $virtualbox.provisioners.ansible.VaultVarsFileName)
+    AnsibleVaultVarsFilePath: $('{0}/{1}/{2}/{3}' -f $MachineObj.environment_posix_path,'group_vars',$virtualbox.provisioners.ansible.VaultVarsFolderName,$virtualbox.provisioners.ansible.VaultVarsFileName)
+    AnsibleVaultVarsFileExists: $(Test-Path $AnsibleVaultVarsFileLocalPath)
+    DerivedAnsibleVaultVarsFilePath: $(If($AnsibleVaultVarsFileExists){$AnsibleVaultVarsFilePath}Else{''})
+    AnsibleVaultVarsArg: $(If($AnsibleVaultVarsFileExists){"-e @$DerivedAnsibleVaultVarsFilePath"}Else{'shit'})  
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap)) -or $([System.Convert]::ToBoolean($MachineObj.vars.auto_provision))"
+  allowed_exitcodes:
+    - 0
+    - 2
+  task_phase: running

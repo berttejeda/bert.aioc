@@ -1,0 +1,4 @@
+error:
+  space: "Not enough space on $DownloadDirLogicalDriveLetter`:\ Drive to download the compressed .box file and subsequently expand it! Halting!"
+info:
+  space: "Available space on Drive $DownloadDirLogicalDriveLetter`: is sufficient"

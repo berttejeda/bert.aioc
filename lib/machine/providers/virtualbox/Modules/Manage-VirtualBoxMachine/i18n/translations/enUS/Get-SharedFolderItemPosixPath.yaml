@@ -1,0 +1,2 @@
+error:
+  unavailable: "The specified file object is not located in any available shared folder:`n$SharedFolderList" 

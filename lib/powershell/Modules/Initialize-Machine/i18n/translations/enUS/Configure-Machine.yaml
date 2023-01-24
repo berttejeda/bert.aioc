@@ -1,0 +1,5 @@
+info:
+  clearing_logfile: Clearing Machine Logfile $($MachineObj.logfile)
+  finished_bootstrap: Finished bootstrap tasks for $($MachineObj.Name)
+error:
+  clearing_logfile: Failed to clear the Machine Logfile $($MachineObj.logfile)

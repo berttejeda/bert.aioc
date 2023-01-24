@@ -1,0 +1,10 @@
+exports:
+  - export PYTHONWARNINGS="ignore"
+  - export PATH=$PATH:/var/lib/snapd/snap/bin
+  - export ANSIBLE_LOG_PATH=$HOME/ansible.log
+VboxManageAvailable: <%= if (Get-Command $virtualbox.defaults.VboxManagePath -ErrorAction SilentlyContinue) {
+    "True"
+  } else {
+    ""
+  }
+  %>

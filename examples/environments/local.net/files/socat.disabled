@@ -1,0 +1,23 @@
+upstream k8s {                                                                                     
+    zone k8s 10m;                                                                                  
+    least_conn;                                                                                            
+         server k8s1:32080;                                                         
+         server k8s2:32080;                                                         
+}                                                                                                          
+                                                                                                           
+server {                                                                                                   
+    listen 8080 ;                                                                                            
+    server_name  server_name ~^(?<service_id>.+)\.(?<env_id>.+)\.ingress\.local\.net$;                                                          
+    status_zone  k8s.local.net;                                                              
+    proxy_cache  nginxCache;                                                                               
+    client_max_body_size 50m;                                                                              
+                                                                                                           
+    location / { 
+		proxy_pass_request_headers      on;
+	    proxy_pass http://socat/$env_id/$service_id$request_uri;
+        access_log off;                                                                                    
+        error_log /var/log/nginx/k8s.local.net/error.log warn;                             
+        health_check;                                                                                      
+    }                                                                                                      
+                                                        
+}                                                                                                          

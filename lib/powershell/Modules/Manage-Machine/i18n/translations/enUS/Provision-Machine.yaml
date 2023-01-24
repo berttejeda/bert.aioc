@@ -1,0 +1,9 @@
+error:
+  no_crr: "$($MachineObj.name) has not yet been created, registered, or is not reachable ..."
+info:
+  availability: "Machine Availability: $($MachineObj.Availability)"
+  initializing: "Initializing provisionment: MachineName is $MachineName"
+  ansibleinventory: "Using AnsibleInventory - $AnsibleInventory"
+  provision: "Provisioning $($MachineObj.name)"
+warn:
+  not_running: "$($MachineObj.name) is not in a running state, current state is $($MachineObj.State)"

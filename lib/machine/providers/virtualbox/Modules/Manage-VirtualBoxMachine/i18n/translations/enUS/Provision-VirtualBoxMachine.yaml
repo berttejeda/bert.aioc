@@ -1,0 +1,10 @@
+error:
+  failed: "Failed to run provisionment tasks against $($MachineObj.name)"
+info:
+  scope: "EnvironmentScope is $EnvironmentScope"
+  ansible:
+    controller: "AnsibleController is $AnsibleController"
+    args: "Ansible::$_ $($AnsibleArgs[$_]) "
+    vars: "AnsibleVars: $AnsibleVars"
+    playbook: "AnsiblePlaybook is $AnsiblePlaybook"
+  sshcmd: "SSH Command is $SSHCMD"

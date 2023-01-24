@@ -1,0 +1,14 @@
+warn:
+  skipped: "$_TaskName [Skipped]"
+  vars: "Couldn't evaluate the task object vars block"
+error:
+  tasksfile: "Init Tasks File - $InitTasksFile"
+  failed: "Failed at task $_TaskName"
+  general: "General Task Error"
+info:
+  mismatch: "Skipping $_TaskName, as machine state must be $($TaskObj.task_phase) vs $VMachineState"
+  taskname: "$_TaskName"
+  run_cmd: "Run command is '$run_cmd'"
+  retry: "Retrying task in 5 seconds..."
+  retry_taskid: "To retry this task, run machine.init.run $($MachineObj.name) $_TaskID"
+  unsupported: "Machine Operations not yet supported for this OS Type"

@@ -1,0 +1,187 @@
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">
+  <Obj RefId="0">
+    <TN RefId="0">
+      <T>Microsoft.PowerShell.Commands.PSRepositoryItemInfo</T>
+      <T>System.Management.Automation.PSCustomObject</T>
+      <T>System.Object</T>
+    </TN>
+    <MS>
+      <S N="Name">Stucco</S>
+      <S N="Version">0.2.0</S>
+      <S N="Type">Module</S>
+      <S N="Description">An opinionated Plaster template for high-quality PowerShell modules</S>
+      <S N="Author">Brandon Olin</S>
+      <S N="CompanyName">devblackops</S>
+      <S N="Copyright">(c) Brandon Olin. All rights reserved.</S>
+      <DT N="PublishedDate">2019-11-10T06:24:39-05:00</DT>
+      <Nil N="InstalledDate" />
+      <Nil N="UpdatedDate" />
+      <URI N="LicenseUri">https://raw.githubusercontent.com/devblackops/Stucco/master/LICENSE</URI>
+      <URI N="ProjectUri">https://github.com/devblackops/Stucco</URI>
+      <URI N="IconUri">https://raw.githubusercontent.com/devblackops/Stucco/master/media/trowel.png</URI>
+      <Obj N="Tags" RefId="1">
+        <TN RefId="1">
+          <T>System.Object[]</T>
+          <T>System.Array</T>
+          <T>System.Object</T>
+        </TN>
+        <LST>
+          <S>Plaster</S>
+          <S>Module</S>
+          <S>Template</S>
+          <S>PSEdition_Core</S>
+          <S>PSEdition_Desktop</S>
+          <S>PSModule</S>
+        </LST>
+      </Obj>
+      <Obj N="Includes" RefId="2">
+        <TN RefId="2">
+          <T>System.Collections.Hashtable</T>
+          <T>System.Object</T>
+        </TN>
+        <DCT>
+          <En>
+            <S N="Key">RoleCapability</S>
+            <Obj N="Value" RefId="3">
+              <TNRef RefId="1" />
+              <LST />
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Function</S>
+            <Ref N="Value" RefId="3" />
+          </En>
+          <En>
+            <S N="Key">Workflow</S>
+            <Ref N="Value" RefId="3" />
+          </En>
+          <En>
+            <S N="Key">Command</S>
+            <Ref N="Value" RefId="3" />
+          </En>
+          <En>
+            <S N="Key">Cmdlet</S>
+            <Ref N="Value" RefId="3" />
+          </En>
+          <En>
+            <S N="Key">DscResource</S>
+            <Ref N="Value" RefId="3" />
+          </En>
+        </DCT>
+      </Obj>
+      <Nil N="PowerShellGetFormatVersion" />
+      <S N="ReleaseNotes">https://raw.githubusercontent.com/devblackops/Stucco/master/CHANGELOG.md</S>
+      <Obj N="Dependencies" RefId="4">
+        <TNRef RefId="1" />
+        <LST>
+          <Obj RefId="5">
+            <TN RefId="3">
+              <T>System.Collections.Specialized.OrderedDictionary</T>
+              <T>System.Object</T>
+            </TN>
+            <DCT>
+              <En>
+                <S N="Key">Name</S>
+                <S N="Value">BuildHelpers</S>
+              </En>
+              <En>
+                <S N="Key">MinimumVersion</S>
+                <S N="Value">2.0.11</S>
+              </En>
+              <En>
+                <S N="Key">CanonicalId</S>
+                <S N="Value">nuget:BuildHelpers/2.0.11</S>
+              </En>
+            </DCT>
+          </Obj>
+          <Obj RefId="6">
+            <TNRef RefId="3" />
+            <DCT>
+              <En>
+                <S N="Key">Name</S>
+                <S N="Value">Plaster</S>
+              </En>
+              <En>
+                <S N="Key">MinimumVersion</S>
+                <S N="Value">1.1.3</S>
+              </En>
+              <En>
+                <S N="Key">CanonicalId</S>
+                <S N="Value">nuget:Plaster/1.1.3</S>
+              </En>
+            </DCT>
+          </Obj>
+          <Obj RefId="7">
+            <TNRef RefId="3" />
+            <DCT>
+              <En>
+                <S N="Key">Name</S>
+                <S N="Value">psake</S>
+              </En>
+              <En>
+                <S N="Key">MinimumVersion</S>
+                <S N="Value">4.8.0</S>
+              </En>
+              <En>
+                <S N="Key">CanonicalId</S>
+                <S N="Value">nuget:psake/4.8.0</S>
+              </En>
+            </DCT>
+          </Obj>
+          <Obj RefId="8">
+            <TNRef RefId="3" />
+            <DCT>
+              <En>
+                <S N="Key">Name</S>
+                <S N="Value">PowerShellBuild</S>
+              </En>
+              <En>
+                <S N="Key">MinimumVersion</S>
+                <S N="Value">0.4.0</S>
+              </En>
+              <En>
+                <S N="Key">CanonicalId</S>
+                <S N="Value">nuget:PowerShellBuild/0.4.0</S>
+              </En>
+            </DCT>
+          </Obj>
+        </LST>
+      </Obj>
+      <S N="RepositorySourceLocation">https://www.powershellgallery.com/api/v2</S>
+      <S N="Repository">PSGallery</S>
+      <S N="PackageManagementProvider">NuGet</S>
+      <Obj N="AdditionalMetadata" RefId="9">
+        <TN RefId="4">
+          <T>System.Management.Automation.PSCustomObject</T>
+          <T>System.Object</T>
+        </TN>
+        <MS>
+          <S N="copyright">(c) Brandon Olin. All rights reserved.</S>
+          <S N="description">An opinionated Plaster template for high-quality PowerShell modules</S>
+          <S N="requireLicenseAcceptance">False</S>
+          <S N="releaseNotes">https://raw.githubusercontent.com/devblackops/Stucco/master/CHANGELOG.md</S>
+          <S N="isLatestVersion">True</S>
+          <S N="isAbsoluteLatestVersion">True</S>
+          <S N="versionDownloadCount">382</S>
+          <S N="downloadCount">653</S>
+          <S N="packageSize">26582</S>
+          <S N="published">11/10/2019 6:24:39 AM -05:00</S>
+          <S N="created">11/10/2019 6:24:39 AM -05:00</S>
+          <S N="lastUpdated">11/11/2020 4:37:56 PM -05:00</S>
+          <S N="tags">Plaster Module Template PSEdition_Core PSEdition_Desktop PSModule</S>
+          <S N="developmentDependency">False</S>
+          <S N="updated">2020-11-11T16:37:56Z</S>
+          <S N="NormalizedVersion">0.2.0</S>
+          <S N="Authors">Brandon Olin</S>
+          <S N="IsPrerelease">false</S>
+          <S N="ItemType">Module</S>
+          <S N="FileList">Stucco.nuspec|plasterManifest.xml|requirements.psd1|Stucco.psd1|template\build.ps1|template\CHANGELOG.md|template\CODE_OF_CONDUCT.md|template\mkdocs.yml|template\psakeFile.ps1|template\README.md|template\requirements.psd1|template\_gitattributes|template\_gitignore|template\.github\CONTRIBUTING.md|template\.github\ISSUE_TEMPLATE.md|template\.github\PULL_REQUEST_TEMPLATE.md|template\.vscode\extensions.json|template\.vscode\settings.json|template\.vscode\tasks.json|template\cicd\.gitlab-ci.yml|template\cicd\appveyor.yml|template\cicd\azure-pipelines.yml|template\cicd\github-actions.yml|template\docs\en-US\about_Module.help.md|template\docs\en-US\about_Module.help.txt|template\license\Apache.txt|template\license\MIT.txt|template\module\Module.psm1|template\module\Classes\classA.ps1|template\module\Private\GetHelloWorld.ps1|template\module\Public\Get-HelloWorld.ps1|template\tests\Help.tests.ps1|template\tests\Manifest.tests.ps1|template\tests\Meta.tests.ps1|template\tests\MetaFixers.psm1|template\tests\ScriptAnalyzerSettings.psd1</S>
+          <S N="GUID">24effa48-ac05-4efd-872d-40d556089ce0</S>
+          <S N="PowerShellVersion">3.0</S>
+          <S N="CompanyName">Community</S>
+        </MS>
+      </Obj>
+      <S N="InstalledLocation">C:\Users\etejeda\git\self\aio.lab.git\tmp\Stucco\0.2.0</S>
+    </MS>
+  </Obj>
+</Objs>

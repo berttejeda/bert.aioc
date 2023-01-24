@@ -1,0 +1,7 @@
+ansible:
+  playbooks:
+    post_create: /media/sf_PROGRAM_DIR/ansible/playbooks/post-create.yaml
+  version: 2.9.3
+  taskrunner_source: ansible-taskrunner
+  LocalAnsibleUser: svcansible
+  VaultFileName: vault.sh  

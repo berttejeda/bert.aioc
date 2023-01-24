@@ -1,0 +1,3 @@
+info:
+  disk:
+    closing: "Closing disk with UUID of $($disk.UUID)"

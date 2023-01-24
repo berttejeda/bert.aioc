@@ -1,0 +1,7 @@
+error:
+  provider: "Invalid provider type for $MachineName, expected vars.provider.type of '$($(Get-ChildItem $Settings.machine.providers.dir) -Join(','))'"
+  validations:
+    notfound: "Could not find machine provider validation file $ValidationsFile"
+info:
+  validations: 
+    running: "Running validation tests against $($MachineObj.name)"

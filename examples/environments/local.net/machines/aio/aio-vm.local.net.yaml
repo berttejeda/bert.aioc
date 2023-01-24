@@ -1,0 +1,192 @@
+---
+- hosts: aio-vm.local.net
+  gather_facts: true
+  become: true
+  vars:
+    auto_start: false
+    auto_start_no_prompt: false
+    auto_provision: true
+    skip_bootstrap: false
+    required_parameters:
+    optional_parameters:
+      --debug-mode: debug_mode ## Enable debug mode
+    help:
+      message: |
+        Invoke aio-vm.local.net machine playbook
+    inventory: |
+      [aio_hosts]
+      aio-vm.local.net type=lxd_host ansible_connection=local 
+    config:
+      os_type: RedHat_64
+      box: berttejeda/oel7-lxc-x64
+      connection_timeout: 60
+      hostname: <%= $VMDefinitionFile.BaseName %>
+      ssh:
+        inject_insecure_key: true
+        username: vagrant
+        password: vagrant
+    desktop: false
+    virtual_interfaces:
+      - name: eth1
+        ip: 192.168.56.220
+        mask: 255.255.255.0
+        auto_config: true
+        method: 'private_network'
+        dns:
+          aliases:
+            - aio
+    port_forwards:
+      - name: docker
+        host: 2376
+        guest: 2376
+        host_ip: 0.0.0.0
+        guest_ip: 0.0.0.0
+      - name: rancher
+        host: 4443
+        guest: 4443
+        host_ip: 0.0.0.0
+        guest_ip: 0.0.0.0
+      - name: http_ingress
+        host: 20080
+        guest: 80
+        host_ip: 0.0.0.0
+        guest_ip: 0.0.0.0 
+      - name: https_ingress
+        host: 20443
+        guest: 443
+        host_ip: 0.0.0.0
+        guest_ip: 0.0.0.0            
+    provider:
+      type: virtualbox
+      virtualbox:
+        modifyvm:
+          name: <%= $VMDefinitionFile.BaseName %>
+          natdnshostresolver1: 'on'
+          cpus: 2
+          memory: 4096
+          vram: 16
+        setextradata:
+          VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root: 1
+    shared_folders:
+      - name: Documents
+        host_path: <%= $env:USERPROFILE  %>\Documents
+      - name: Downloads
+        host_path: <%= $env:USERPROFILE  %>\Downloads
+      - name: git
+        host_path: <%= $env:USERPROFILE  %>\git
+      - name: workspace
+        host_path: <%= $env:USERPROFILE  %>\Documents\workspace
+      - name: machine_dir
+        host_path: <%= $MachineDir %>
+
+  roles:
+    - role: system/setup
+    - role: users
+      vars:
+        additional_ssh_users:
+          - etejeda
+        additional_ssh_groups:
+          - microk8s
+        environment_templates_path: '{{ environment_dir }}/templates'
+      tags:
+        - host.users        
+    - role: snapd/install
+    - role: network/conntrack
+    - role: microservices/netfiltering_enable
+    - role: fso/lvm
+      vars:
+        raw_disks: /dev/sdb1
+        vg_name: lxd
+      tags:
+        - lxc.bootstrap.host.lvm        
+    - role: lxc/host
+      vars:
+        lvm_thinpool_name: lxc_thinpool
+        lvm_vg_source_name: lxd
+        host_default_interface: enp5s0
+        initialize_lxd: true
+      tags:
+        - lxc.bootstrap.host
+    - role: lxc/container/manage
+      vars:
+        lxc_remote: '{{ inventory_hostname }}'
+        lxc_containers:
+         - name: 'rancher'
+           profiles: 
+              - default
+              - kubernetes
+              - macvlan
+           inventory_vars: 
+            type: k8s_orchestrators
+           config:
+            limits.cpu: "8"
+            limits.memory: 12GB
+           source:
+            alias: oracle/7/amd64
+      tags:
+        - rancher.cluster
+        - rancher.ports
+        - rancher.install                 
+        - rancher.install.quick                 
+        - rancher.login
+        - lxc.bootstrap 
+    - role: lxc/container/manage
+      vars:
+        lxc_containers:
+         - name: 'k8s-master-01'
+           profiles: 
+              - default
+              - kubernetes
+              - macvlan
+           inventory_vars: 
+            type: master   
+         - name: 'k8s-worker-01'
+           profiles: 
+              - default
+              - kubernetes
+              - macvlan
+           inventory_vars:
+            type: worker 
+           source:
+            alias: oracle/7/amd64                
+      tags:
+        - rancher.cluster                      
+        - lxc.bootstrap                        
+    - role: system/update
+      when: update_system | default(false) | bool
+    - role: completion
+
+- name: Container Playbook
+  hosts: lxc_containers
+  gather_facts: true
+
+  roles:
+    - role: microservices/docker/install
+      vars:
+        docker_package_name_rhel: docker-ce-19.03.9-3 
+      tags:
+        - lxc.bootstrap
+        - rancher.install                
+        - rancher.cluster
+    - role: microservices/rancher/install/single
+      when: type == 'k8s_orchestrators'
+      tags:
+        - lxc.bootstrap
+        - rancher.install                
+        - rancher.install.quick                
+        - rancher.cluster
+    - role: microservices/rancher/login
+      vars:
+        rancher_api_host: "rancher.local.net"
+      tags:
+        - rancher.login
+        - rancher.cluster
+    - role: microservices/rancher/cluster/build
+      vars:
+        rancher_api_host: "rancher.local.net"
+        rancher_cluster_network_plugin: flannel
+        cluster_name: dev-ecp-leh-01
+        kubernetes_version: "v1.15.12-rancher2-5"
+      tags:
+        - rancher.cluster
+    - role: completion

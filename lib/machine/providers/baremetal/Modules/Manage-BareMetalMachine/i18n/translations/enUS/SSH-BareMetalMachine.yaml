@@ -1,0 +1,13 @@
+error:
+  ssh:
+    port: "Could not determine SSH port for $($MachineObj.name)"
+    execution: "Execution failed with exit code $LASTEXITCODE"
+    privatekey: "No default ssh private key is defined for this machine"
+  notrunning: "$($MachineObj.name) is not running ..."
+info:
+  ssh:
+    port:
+    login: "Attempting to login as $ssh_username using ssh Private Key: $ssh_private_key"
+    command: "SSH Command is &'$APP_DIR\\bin\\ssh.exe' -i $ssh_private_key -o 'LogLevel=$SSHLogLevel '-o 'UserKnownHostsFile=NUL' -o 'StrictHostKeyChecking=no' $ssh_username@localhost -p $MachineSSHPort '>/dev/null'"
+    privatekey: "Attempting to use default SSH Private Key: $ssh_private_key"
+    privatekeyms: "No Machine-specific ssh key defined"

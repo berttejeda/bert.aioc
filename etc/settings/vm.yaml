@@ -1,0 +1,11 @@
+VirtualizationFirmwareEnabled: <%= 
+  if (-not $isLinux) { 
+  (Get-CimInstance -ClassName win32_processor).VirtualizationFirmwareEnabled
+  } else {
+  if ( $(& cat /proc/cpuinfo | egrep "vmx|svm") ) {
+  $True
+  } else { 
+  $False
+  } 
+  } 
+  %>

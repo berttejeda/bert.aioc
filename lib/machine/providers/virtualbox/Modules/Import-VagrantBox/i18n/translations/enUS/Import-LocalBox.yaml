@@ -1,0 +1,8 @@
+error:
+  copy: "An error occurred in copying the remote vhd files ..."
+  options: "No more options left to try ... "
+  vagrantbox: "Error in processing $VagrantBox"
+info:
+  copy:
+    message: "Copying $VagrantBox"
+    label: "Vagrant Box COPY Process"

@@ -1,0 +1,11 @@
+- name: Check OS_TYPE specification
+  command: |-
+    $process = Execute-Command $virtualbox.defaults.VboxManagePath @("list","ostypes") 
+    if ($process.exitcode -ne 0) {
+      Invoke-Logger "Error in determining supported OS Types, unexpected behavior may result" -Warn
+    } else {
+      $os_supported = ($process.stdout | Select-String $MachineObj.vars.config.os_type).length -gt 0
+      if (!$os_supported){
+        throw [System.Exception] "OS_Type Is Not Supported!"
+      }
+    }

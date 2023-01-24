@@ -1,0 +1,4 @@
+info:
+  registered: "$($MachineObj.name) has already been registered ..."
+  starting: "Starting $($MachineObj.name) instead ..."
+  valid: "Machine definition for $($MachineObj.name) is valid"

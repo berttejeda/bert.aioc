@@ -1,0 +1,9 @@
+error:
+  resolve: "Unable to resolve URL for Vagrant Box $VagrantBox that matches the specified provider (i.e. $VagrantProvider)! Halting!"
+  vhd: "An error occurred in downloading the remote vhd files ..."
+  message: "Error was $($error[0].Exception.Message)"
+  options: "No more options left to try ... "
+  downloadurl: "Error in processing $FinalVagrantBoxDownloadUrl"
+info:
+  statuscode: "Received HTTP Response $($HTTP_Response.StatusCode)"
+  downloadurl: "FinalVagrantBoxDownloadUrl is $FinalVagrantBoxDownloadUrl"

@@ -1,0 +1,15 @@
+error:
+  duplicate_definitions: "Duplicate machine definitions found - $DuplicateObjects"
+  duplicate_machine: "Duplicate machine definition found for $_"
+  machine_definition_yaml: "Failed to load machine definition YAML"
+  failed_properties: "Failed to derive properties for machine $($MachineDefinitionFile.BaseName)"
+  definition_not_found: "Could not find machine definition for $MachineName in specified environment $MachineEnvironment\\machines"
+  raw_definition_not_found: "The specified RawDefinition(s) do not exist!"
+  raw_definition_unsupported: "Unsupported RawDefinitions type"
+info:
+  reading_definition: "Reading $MachineDefinitionFile"
+  environment_scope: "EnvironmentScope: $EnvironmentScope"
+  no_provider_attributes: "No provider-specific attribute function found for $($MachineDefinitionFile.BaseName)"
+warn:
+  definition_empty: "Skipping $($MachineDefinitionFile.FullName), as it is empty!"
+  no_vars_block: "Skipping $($MachineDefinitionFile.FullName), as it does not contain a vars block!"

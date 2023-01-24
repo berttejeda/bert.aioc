@@ -1,0 +1,4 @@
+error:
+  failed: "Failed to expand input string ($InputString)"
+info:
+  input: "InputString is $InputString"

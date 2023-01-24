@@ -1,0 +1,5 @@
+port: 22
+keys:
+  public: <%= "$HOME\.ssh\id_rsa.pub" %>
+  private: <%= "$HOME\.ssh\id_rsa" %>
+username: <%= "$env:Username" %>

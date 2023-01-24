@@ -1,0 +1,4 @@
+error:
+  not_accessible: "Target environment $MachineEnvironment is not accessible"
+info:
+  set: "Setting current environment to $TargetEnvironment"

@@ -1,0 +1,7 @@
+error:
+  no_crr: "$($MachineObj.name) has not yet been created, registered, or is not reachable ..."
+info:
+  force_stop: "Forcibly stopping $($MachineObj.name)"
+  stop: "Stopping $($MachineObj.name)"
+warn:
+  not_running: "$($MachineObj.name) is not in a running state, current state is $($MachineObj.State)"

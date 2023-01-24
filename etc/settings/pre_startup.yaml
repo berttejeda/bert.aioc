@@ -1,0 +1,5 @@
+tasks:
+  - name: Invoking any user-specific pre-startup tasks
+    command: |-
+      Invoke-StartupTasks $Settings.preferences.pre_startup
+    always_run: true

@@ -1,0 +1,85 @@
+---
+- hosts: centos7.local.net
+  gather_facts: true
+  become: true
+  vars:
+    auto_start: false
+    auto_start_no_prompt: false
+    auto_provision: true
+    skip_bootstrap: false
+    required_parameters:
+    optional_parameters:
+      --debug-mode: debug_mode ## Enable debug mode
+    help:
+      message: |
+        Invoke centos7.local.net machine playbook
+    inventory: |
+      [lxc-hosts]
+      centos7.local.net type=lxd_host ansible_connection=local 
+    config:
+      os_type: RedHat_64
+      box: https://github.com/holms/vagrant-centos7-box/releases/download/7.1.1503.001/CentOS-7.1.1503-x86_64-netboot.box
+      connection_timeout: 60
+      hostname: <%= $VMDefinitionFile.BaseName %>
+      ssh:
+        inject_insecure_key: false
+    desktop: false
+    virtual_interfaces:
+      - name: eth1
+        ip: 192.168.56.204
+        mask: 255.255.255.0
+        auto_config: true
+        method: 'private_network'
+        dns:
+          aliases:
+            - aio
+    provider:
+      type: virtualbox
+      virtualbox:
+        modifyvm:
+          name: <%= $VMDefinitionFile.BaseName %>
+          natdnshostresolver1: 'on'
+          cpus: 2
+          memory: 4096
+          vram: 16
+        setextradata:
+          VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root: 1
+    shared_folders:
+      - name: Documents
+        host_path: <%= $env:USERPROFILE  %>\Documents
+      - name: Downloads
+        host_path: <%= $env:USERPROFILE  %>\Downloads
+      - name: git
+        host_path: <%= $env:USERPROFILE  %>\git
+      - name: workspace
+        host_path: <%= $env:USERPROFILE  %>\Documents\workspace
+      - name: machine_dir
+        host_path: <%= $VMMachineDir %>
+    init:
+      tasks:
+        - name: This is a machine-specific pre-init task
+          command: |-
+            Write-Host 'Hello from machine-specific pre-init task!'
+        - name: This is another machine-specific pre-init task
+          command: |-
+            Write-Host 'Hello again from machine-specific pre-init task!'
+  roles:
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/repo/epel        
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/vm/bootstrap
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/python/pip        
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/users
+      vars:
+        template_root_dir: "{{ playbook_dir }}"
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/snapd/install
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/microservices/netfiltering_enable
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/microservices/docker/install
+      vars:
+        docker_package_name_rhel: docker-ce-19.03.9-3
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/microservices/docker/configure
+      vars:
+        docker_users:
+          - vagrant
+          - svcansible
+        docker_insecure_registries:
+          - local.net
+    - role: /media/sf_PROGRAM_DIR/lib/ansible/roles/completion     

@@ -1,0 +1,7 @@
+error:
+  not_registered: "$($MachineObj.name) is not registered ..."
+info:
+  destroy: "Destroying $($MachineObj.name)"
+  no_destroy: "Not destroying $($MachineObj.name)"
+prompt:
+  destroy: "Destroy the virtual machine $($MachineObj.name) and delete all related files? (Y/N)"

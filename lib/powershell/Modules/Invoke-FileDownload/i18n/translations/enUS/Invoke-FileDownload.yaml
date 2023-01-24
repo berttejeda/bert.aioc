@@ -1,0 +1,5 @@
+error:
+  init: "Error in initializing http Web Request for $Uri - HTTP Status Code $HTTPReturnCode"
+  output_exists: "$OutputFile already exists."
+info:
+  complete: "Finished downloading $($Uri.split('/') | Select -Last 1), output file is $OutputFile"

@@ -1,0 +1,13 @@
+error:
+  no_tasks_matching: No Tasks found matching that criteria
+  failed_derive_tasks: Failed to derive tasks for $($MachineObj.name) - $($_.Exception.Message)
+info:
+  inittasksfile: InitTasksFile is $InitTasksFile
+  check_global_init: Checking for any Global Init Files ...
+  include_global_init: Including global init actions from $GlobalInitFile
+warning:
+  failed_adding_global_init: Failed to add Global init actions from $GlobalInitFile
+  unsupported_init_operation: Unsupported init task operation $TaskErr
+  failed_add_mspec_init_tasks: Failed to add machine-specific init tasks
+  no_tasks_matching: No Tasks found matching that criteria other than tasks with always_run=true
+  no_tasks_matching_advise: Try running ``machine.init.list $($MachineObj.name)``

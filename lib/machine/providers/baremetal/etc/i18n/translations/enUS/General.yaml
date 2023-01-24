@@ -1,0 +1,3 @@
+errors:
+  ssh:
+    connect: Unable to connect

@@ -1,0 +1,4 @@
+error:
+  not_registered: "$MachineName is not registered ..."
+warn:
+  not_running: "$($MachineObj.name) is not in a running state, current state is $($MachineObj.State)"

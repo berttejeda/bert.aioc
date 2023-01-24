@@ -1,0 +1,65 @@
+git:
+  apps:
+    - binary: git-cmd.exe
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"
+    - binary: git-bash.exe
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"      
+    - binary: <%= "$env:ProgramFiles\Git\git-cmd.exe" %>
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"
+    - binary: <%= "$env:ProgramFiles\Git\git-bash.exe" %>
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"
+    - binary: <%= $env:LOCALAPPDATA %>\Programs\Git\git-cmd.exe
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"
+    - binary: <%= "$env:ProgramFiles\Git\bin\git-cmd.exe" %>
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"
+    - binary: <%= "$env:ProgramFiles\Git\bin\git-bash.exe" %>
+      command: "--no-cd --command=usr/bin/bash.exe -l -i"
+  notfound: |-
+    "Could not find the git bash executable in any of the configured paths:"
+    $($($Settings.shells.git.apps) | %{"$($_.binary)`n"})
+    "You can install bash via git-bash, as follows:"
+    "A. Using chocolatey (requires you install it first):"
+      "choco install -y git"
+    "B. Manually:"
+      "1. Go here: https://git-for-windows.github.io/"
+      "2. Install, and when prompted for options, choose these below:"
+      "'Use Git from Bash only'"
+      "'Use OpenSSH'"
+      "'Checkout Windows-style, commit Unix-style line endings'"
+      "You can accept default options thereafter ...  "
+    "git shell settings file can be found here: $APP_DIR\etc\settings\shells.yaml"
+
+python:
+  apps:
+    - binary: <%= $env:LOCALAPPDATA %>\Programs\Python27\python.exe
+    - binary: C:\Python27\python.exe
+    - binary: Programs\python\python.exe
+    - binary: Programs\python2\python.exe
+    - binary: Programs\python3\python.exe
+    - binary: python.exe
+  notfound: |-
+    "Could not find the python executable in any of the configured paths:"
+    $($($Settings.shells.python.apps) | %{"$($_.binary)`n"})
+    "You can install python as follows:"
+    "A. Using chocolatey (requires you install it first):"
+      "choco install -y python"
+    "B. Manually:"
+      "1. Go to the python downloads site: https://www.python.org/downloads/windows/"
+      "2. Choose the latest release and download the installer"
+      "3. Install"
+    "python shell settings file can be found here: $APP_DIR\etc\settings\shells.yaml"
+sublimetext3:
+  apps:
+    - binary: Programs\Sublime Text 3\sublime_text.exe
+    - binary: <%= "$env:ProgramFiles\Sublime Text 3\sublime_text.exe" %>
+      command: "sublime_text.exe -a ."
+  notfound: |-
+    "Could not find the Sublime Text 3 executable in any of the configured paths:"
+    $($($Settings.shells.sublime.apps) | %{"$($_.binary)`n"})
+    "You can install Sublime Text 3 as follows:"
+    "A. Using chocolatey (requires you install chocolatey first):"
+      "choco install -y SublimeText3
+    "B. Manually:"
+      "1. Go to the Sublime Text 3 download site: https://www.sublimetext.com/3"
+      "2. Choose the latest release and download the installer"
+      "3. Install"

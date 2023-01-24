@@ -1,0 +1,10 @@
+# vagrant/keys at master · hashicorp/vagrant
+# https://github.com/hashicorp/vagrant/tree/master/keys
+port: 22
+port_range:
+  - 9022
+  - 9122  
+private_key: <%= $APP_DIR %>\etc\ssh_keys\vagrant_insecure_private_key
+public_key: <%= $APP_DIR %>\etc\ssh_keys\vagrant_insecure_public_key
+timeout: 5
+username: vagrant

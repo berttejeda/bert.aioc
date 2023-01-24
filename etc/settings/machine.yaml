@@ -1,0 +1,19 @@
+init_file_name: init.yaml
+pip_url: https://raw.githubusercontent.com/pypa/get-pip/master/get-pip.py  
+pip2_url: https://bootstrap.pypa.io/pip/2.7/get-pip.py
+pip_version: 19.3.1
+providers:
+  dir: <%= if (-not $isLinux) { 
+      $APP_DIR + '\lib\machine\providers'
+    } else {
+      $APP_DIR + '/lib/machine/providers'
+    }
+    %>
+  available: <%= $($(Get-ChildItem "$APP_DIR\lib\machine\providers" | %{$_.BaseName}) -Join(',')) %>
+workdir: <%= if (-not $isLinux) {
+    $Settings.defaults.infraio_workdir + '\machines' 
+  } else {
+    $Settings.defaults.infraio_workdir + '/machines' 
+  }
+  %>
+...

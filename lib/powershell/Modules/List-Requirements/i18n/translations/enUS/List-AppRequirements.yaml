@@ -1,0 +1,5 @@
+warn:
+  app_not_found: "Couldn't find $($app.name)"
+  app_install: "Please install the app yourself whenever possible"
+  functionality: "Functionality may be impared"
+  os: "I had trouble detecting your OS"

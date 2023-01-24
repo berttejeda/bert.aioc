@@ -1,0 +1,66 @@
+apps:
+  - name: choco
+    install_check: Stat-App choco
+    required: False
+    os: windows
+    install_cmd: |-
+      Set-Variable -Name "ChocolateyInstall" -Value "$(Join-Path -Path $Env:LocalAppData -ChildPath chocolatey)"
+      New-Item $ChocolateyInstall -Type Directory -Force
+      [Environment]::SetEnvironmentVariable("ChocolateyInstall", $ChocolateyInstall)
+      iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
+  - name: git
+    install_check: Stat-App git
+    required: False
+    install_cmd: 'start-process "$PWD\Elevate.exe" -ArgumentList @("choco", "install", "-y", "git") -wait -PassThru'
+  - name: <%= $env:PROGRAMFILES %>\Oracle\VirtualBox\vboxmanage.exe
+    install_check: Stat-App $virtualbox.defaults.VboxManagePath
+    os: windows
+    required: True
+    install_cmd: |-
+      if ($Settings.vm.VirtualizationFirmwareEnabled){
+        Start-Process "msiexec.exe" -ArgumentList @("/passive", "/i", "$PWD\res\VirtualBox-6.1.0-r135406.msi") -wait -PassThru
+      } else {
+        Invoke-Logger "Virtualization is not enabled in your bios ... skipping VirtualBox installation" -Err
+      }
+  - name: docker-compose
+    install_check: Stat-App "<%= $PWD %>\bin\docker-compose.exe"
+    required: False
+    install_cmd: |-
+      # Set the uri for the latest release
+      $URI = "https://api.github.com/repos/docker/compose/releases/latest"
+      # Query for the latest release version
+      Try {
+          $LatestComposeVersion = [System.Version](Invoke-RestMethod -Method Get -Uri $URI).tag_name
+      }
+      Catch {
+          Invoke-Logger "Query for the latest docker-compose release version failed" -Err
+          &pause
+      }      
+
+      Try {
+          $RemoteFileName = "docker-compose-Windows-x86_64.exe"
+          $URI = ("https://github.com/docker/compose/releases/download/{0}/{1}" -f $LatestComposeVersion.ToString(), $RemoteFileName)
+          Invoke-FileDownload -Uri $URI -OutputFile $PWD\bin\docker-compose.exe -ChunkSize 10MB
+      }
+      Catch {
+          Invoke-Logger "Failed to download the latest version of docker-compose`n{0}" -f $_.Exception.Message) -Err
+      }
+  - name: kubectl
+    install_check: Stat-App "<%= $PWD %>\bin\kubectl.exe"
+    required: False
+    install_cmd: |-
+      try{
+        $KubectlLatestVersion = (New-Object System.Net.WebClient).DownloadString("https://storage.googleapis.com/kubernetes-release/release/stable.txt")
+        if ($KubectlLatestVersion) {
+          $KubectlLatestVersion = $KubectlLatestVersion.trim()
+        } else {
+          Invoke-Logger "Error reading kubectl version - You'll need to download the binary on your own" -Err
+          Invoke-Logger "https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-on-windows" -Err
+          &pause  
+        }
+        Invoke-FileDownload -Uri https://storage.googleapis.com/kubernetes-release/release/$KubectlLatestVersion/bin/windows/amd64/kubectl.exe -OutputFile $PWD\bin\kubectl.exe -ChunkSize 10MB
+      } catch {
+        Invoke-Logger "Error downloading kubectl - $($_.Exception.message)" -Err
+        &pause
+      }
+

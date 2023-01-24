@@ -1,0 +1,36 @@
+- name: Unit and regression tests using $TestsFile
+  command: $TRUE -eq $TRUE | Out-Null
+  no_report: true
+- name: Reset Environment
+  command: environment.reset
+- name: Get-Definitions
+  command: machine.definitions.get -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: Create-Machine
+  command: machine.create -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: List-Machine
+  command: machine.list -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: List-Machine (ALL)
+  command: machine.list
+- name: Invoke-InitTask -ListTasks
+  command: machine.init.list -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: Invoke-InitTask First Task
+  command: machine.init.run -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path 0
+- name: Stat-MachineCli
+  command: virtualbox.stat.cli -Machine test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: Stat-SharedFolders
+  command: virtualbox.stat.sharedfolders -Machine test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: SSH-Machine (Press ctrl+d if you enter an interactive SSH session)
+  command: machine.ssh -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path -SSHCMD '/bin/env true'
+- name: Stop-Machine
+  command: machine.stop -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: Waiting 5 seconds
+  command: Start-Sleep 5
+  internal: true
+- name: Start-Machine
+  command: machine.start -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: Restart-Machine
+  command: machine.restart -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path
+- name: Destroy-Machine
+  command: |-
+    machine.stop -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path -WaitForShutdown -Force
+    machine.destroy -MachineName test-machine.local.net -MachineEnvironment $Settings.environment.current.path -Force

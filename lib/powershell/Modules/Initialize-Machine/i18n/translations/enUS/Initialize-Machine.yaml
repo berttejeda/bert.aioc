@@ -1,0 +1,5 @@
+error:
+  no_init_found: "Did not find a suitable Init Task File for $MachineName, ensure the vars.provider.type matches one of '$($Settings.machine.providers.available)'"
+  no_state: "Could not determine state for $MachineName"
+info:
+warning:

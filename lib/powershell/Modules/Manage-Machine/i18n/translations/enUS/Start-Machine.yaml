@@ -1,0 +1,5 @@
+error:
+  no_crr: "$($MachineObj.name) has not yet been created, registered, or is not reachable ..."  
+info:
+  starting: "Starting $($MachineObj.name)"
+  is_running: "$($MachineObj.name) is already running"

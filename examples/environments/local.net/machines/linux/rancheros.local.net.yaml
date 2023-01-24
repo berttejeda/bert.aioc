@@ -1,0 +1,49 @@
+---
+- hosts: rancheros.local.net
+  gather_facts: true
+  become: true
+  vars:
+    type: virtual-machine
+    auto_start: false
+    auto_start_no_prompt: false
+    auto_provision: false
+    skip_bootstrap: true
+    required_parameters:
+    optional_parameters:
+      --debug-mode: debug_mode ## Enable debug mode
+    help:
+      message: |
+        Invoke rancheros.local.net machine playbook
+    inventory: |
+      [lxc-hosts]
+      rancheros.local.net type=lxd_host ansible_connection=local 
+    config:
+      os_type: RedHat_64
+      box: rancherio/rancheros
+      connection_timeout: 60
+      hostname: <%= $VMDefinitionFile.BaseName %>
+      ssh:
+        inject_insecure_key: false
+        username: rancher
+    desktop: false
+    virtual_interfaces:
+      - name: eth1
+        ip: 192.168.56.203
+        mask: 255.255.255.0
+        auto_config: true
+        method: 'private_network'
+        dns:
+          aliases:
+            - rancheros
+    port_forwards: []
+    provider:
+      type: virtualbox
+      virtualbox:
+        modifyvm:
+          name: <%= $VMDefinitionFile.BaseName %>
+          natdnshostresolver1: 'on'
+          cpus: 1
+          memory: 1024
+          vram: 16
+        setextradata:
+          VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root: 1

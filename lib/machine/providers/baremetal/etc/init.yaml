@@ -1,0 +1,107 @@
+- name: Check for machine paths
+  command: |-
+    ForEach ($MachineDirectoryObj in @($MachineObj.machine_dir, "$($MachineObj.machine_dir)\containers")){
+        Invoke-Logger "Checking for machine dir $MachineDirectoryObj" -Logfiles $MachineObj.logfile
+        try {
+            If (-Not $(Test-Path -Path "$MachineDirectoryObj")){
+                Invoke-Logger "Creating machine dir $MachineDirectoryObj" -Logfiles $MachineObj.logfile
+                New-Item -ItemType Directory -Path "$MachineDirectoryObj" | Out-Null
+            } Else {
+                Invoke-Logger "$MachineDirectoryObj already present ... skipping" -Logfiles $MachineObj.logfile
+            }
+        } catch {
+            throw "Failed to create Machine Directory Obj - $MachineDirectoryObj error was $_"
+            return
+        }
+    }    
+  fail_msg: Failed to check for machine paths
+  task_phase: poweredoff
+
+- name: Creating $($MachineObj.Name)
+  command: |-
+    Write-Host "Not Yet Implemented" 
+  fail_msg: Failed to create and register $($MachineObj.Name)
+
+- name: Start Machine
+  command: |-
+    Write-Host "Not Yet Implemented" 
+  fail_msg: Failed to start Machine - $($MachineObj.Name)
+  task_phase: poweredoff
+
+- name: Ensure pip is installed ...
+  command: if wget -qO - $($Settings.machine.pip_url) > /dev/null;then wget -qO - $($Settings.machine.pip_url) | sudo python;else exit 1;fi
+  retries: 3
+  fail_msg: Failed to install desired version of pip
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"
+  task_phase: running
+
+- name: Ensure latest version of python setuptools is installed ...
+  retries: 3
+  command: |-
+    $($baremetal.environment.exports -Join(';'));sudo /usr/bin/env pip install -U setuptools
+  fail_msg: Failed to install desired version of pip
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Ensure latest version of pip wheel is installed ...
+  command: |-
+    $($baremetal.environment.exports -Join(';'));sudo /usr/bin/env pip install -U wheel
+  fail_msg: Failed to install pip wheel
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Ensure desired version of ansible is installed ...
+  command: |-
+    $($baremetal.environment.exports -Join(';'));sudo /usr/bin/env pip install -U ansible==$($baremetal.provisioners.ansible.version)
+  fail_msg: Failed to install desired version of ansible
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Install latest ansible-tasksrunner
+  command: |-
+    cd $($MachineObj.program_dir) && $($baremetal.environment.exports -Join(';'));sudo /usr/bin/env pip install -U $($baremetal.provisioners.ansible.taskrunner_source)
+  fail_msg: Failed to install desired version of ansible-taskrunner
+  ignore_errors: true
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  task_phase: running
+
+- name: Apply Post-Creation configurations via ansible playbook
+  command: |-
+    cd $($MachineObj.program_dir) && $($virtualbox.environment.exports -Join(';'));$AnsibleVaultArg;/bin/ansible-playbook -i $($MachineObj.InventorySpec) $($MachineObj.definition_posix_path) -c local -e environment_folder=$($MachineObj.environment_posix_path) -e additional_ssh_groups=vboxsf -e shared_templates_path='$($MachineObj.environments_posix_path)/templates' -e environment_templates_path=$($MachineObj.environment_posix_path)/templates
+  delegate_to: guest
+  fail_msg: Failed to run Post-Creation configurations via ansible
+  wait_for_shared_folders: true
+  vars:
+    AnsibleVaultFileLocalPath: $MachineObj.environment + '\' + $virtualbox.provisioners.ansible.VaultFileName
+    AnsibleVaultFilePath: $MachineObj.environment_posix_path + '/' + $virtualbox.provisioners.ansible.VaultFileName
+    AnsibleLocalFileExists: $(Test-Path $AnsibleVaultFileLocalPath)
+    DerivedAnsibleVaultFilePath: $(If($AnsibleLocalFileExists){$AnsibleVaultFilePath}Else{''})
+    AnsibleVaultArg: $(If($AnsibleLocalFileExists){"export ANSIBLE_VAULT_PASSWORD_FILE=$DerivedAnsibleVaultFilePath"}Else{'echo ...'})
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+  allowed_exitcodes:
+    - 0
+    - 2
+  task_phase: running
+
+- name: Run auto-provisionment steps on $($MachineObj.Name)
+  command: |-
+    cd $($MachineObj.program_dir) && $($baremetal.environment.exports -Join(';'));/bin/ansible-playbook -i $($MachineObj.InventorySpec) $($MachineObj.definition_posix_path) -c local -e vm_name=$($MachineObj.Name) -e environment_folder=$($MachineObj.environment_posix_path) -e machine_definition_file_path=$($MachineObj.definition_posix_path)
+  fail_msg: Failed to run provisionment steps via tasks/ansible
+  when: 
+    - "!$([System.Convert]::ToBoolean($MachineObj.vars.skip_bootstrap))"  
+    - "$([System.Convert]::ToBoolean($MachineObj.vars.auto_provision))"
+  allowed_exitcodes:
+    - 0
+    - 2
+  task_phase: running
+

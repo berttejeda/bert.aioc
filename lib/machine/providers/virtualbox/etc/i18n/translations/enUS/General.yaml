@@ -1,0 +1,3 @@
+errors:
+  vbox_cli:
+    not_found: The VirtualBox cli is not available, $($virtualbox.defaults.VboxManagePath) not found in PATH
