@@ -341,8 +341,8 @@
         </member>
         <member name="M:Microsoft.PowerShell.Commands.CompareObjectCommand.BeginProcessing">
             <summary>
-            If the parameter 'ExcludeDifferent' is present, then we need to turn on the
-            'IncludeEqual' switch unless it's turned off by the user specifically.
+            If the parameter 'ExcludeDifferent' is present, then the 'IncludeEqual'
+            switch is turned on unless it's turned off by the user specifically.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.CompareObjectCommand.ProcessRecord">
@@ -373,6 +373,148 @@
             <summary>
             </summary>
             <value></value>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand">
+            <summary>
+            Converts a SDDL string into an object-based representation of a security descriptor.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.Sddl">
+            <summary>
+            Gets and sets the string representing the security descriptor in SDDL syntax.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.Type">
+            <summary>
+            Gets and sets type of rights that this SDDL string represents.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.ProcessRecord">
+            <summary>
+            ProcessRecord method.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames">
+            <summary>
+            AccessRight type names.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.FileSystemRights">
+            <summary>
+            FileSystemRights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.RegistryRights">
+            <summary>
+            RegistryRights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.ActiveDirectoryRights">
+            <summary>
+            ActiveDirectoryRights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.MutexRights">
+            <summary>
+            MutexRights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.SemaphoreRights">
+            <summary>
+            SemaphoreRights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.EventWaitHandleRights">
+            <summary>
+            EventWaitHandleRights.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.SecurityDescriptorInfo">
+            <summary>
+            Representation of a security descriptor.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.Owner">
+            <summary>
+            EventWaitHandle rights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.Group">
+            <summary>
+            EventWaitHandle rights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.DiscretionaryAcl">
+            <summary>
+            EventWaitHandle rights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.SystemAcl">
+            <summary>
+            EventWaitHandle rights.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.RawDescriptor">
+            <summary>
+            EventWaitHandle rights.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand">
+            <summary>
+            Class comment.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand.StringData">
+            <summary>
+            The list of properties to display.
+            These take the form of an PSPropertyExpression.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand.Delimiter">
+            <summary>
+            Gets or sets the delimiter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand.ProcessRecord">
+            <summary>
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand">
+            <summary>
+            Converts a Markdown string to a MarkdownInfo object.
+            The conversion can be done into a HTML text or VT100 encoding string.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.Path">
+            <summary>
+            Gets or sets path to the file to convert from Markdown to MarkdownInfo.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.LiteralPath">
+            <summary>
+            Gets or sets the path to the file to convert from Markdown to MarkdownInfo.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.InputObject">
+            <summary>
+            Gets or sets the InputObject of type System.IO.FileInfo or string with content to convert from Markdown to MarkdownInfo.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.AsVT100EncodedString">
+            <summary>
+            Gets or sets if the Markdown document should be converted to a VT100 encoded string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.BeginProcessing">
+            <summary>
+            Read the PSMarkdownOptionInfo set in SessionState.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.ProcessRecord">
+            <summary>
+            Override ProcessRecord.
+            </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.ConvertToHtmlCommand">
             <summary>
@@ -539,143 +681,6 @@
             List of incoming objects to compare.
             </summary>
         </member>
-        <member name="T:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand">
-            <summary>
-            Converts a SDDL string into an object-based representation of a security descriptor.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.Sddl">
-            <summary>
-            Gets and sets the string representing the security descriptor in SDDL syntax.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.Type">
-            <summary>
-            Gets and sets type of rights that this SDDL string represents.
-            </summary>
-        </member>
-        <member name="M:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.ProcessRecord">
-            <summary>
-            ProcessRecord method.
-            </summary>
-        </member>
-        <member name="T:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames">
-            <summary>
-            AccessRight type names.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.FileSystemRights">
-            <summary>
-            FileSystemRights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.RegistryRights">
-            <summary>
-            RegistryRights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.ActiveDirectoryRights">
-            <summary>
-            ActiveDirectoryRights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.MutexRights">
-            <summary>
-            MutexRights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.SemaphoreRights">
-            <summary>
-            SemaphoreRights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.ConvertFromSddlStringCommand.AccessRightTypeNames.EventWaitHandleRights">
-            <summary>
-            EventWaitHandleRights.
-            </summary>
-        </member>
-        <member name="T:Microsoft.PowerShell.Commands.SecurityDescriptorInfo">
-            <summary>
-            Representation of a security descriptor.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.Owner">
-            <summary>
-            EventWaitHandle rights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.Group">
-            <summary>
-            EventWaitHandle rights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.DiscretionaryAcl">
-            <summary>
-            EventWaitHandle rights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.SystemAcl">
-            <summary>
-            EventWaitHandle rights.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.SecurityDescriptorInfo.RawDescriptor">
-            <summary>
-            EventWaitHandle rights.
-            </summary>
-        </member>
-        <member name="T:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand">
-            <summary>
-            Class comment.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand.StringData">
-            <summary>
-            The list of properties to display.
-            These take the form of an PSPropertyExpression.
-            </summary>
-            <value></value>
-        </member>
-        <member name="M:Microsoft.PowerShell.Commands.ConvertFromStringDataCommand.ProcessRecord">
-            <summary>
-            </summary>
-        </member>
-        <member name="T:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand">
-            <summary>
-            Converts a Markdown string to a MarkdownInfo object.
-            The conversion can be done into a HTML text or VT100 encoding string.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.Path">
-            <summary>
-            Gets or sets path to the file to convert from Markdown to MarkdownInfo.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.LiteralPath">
-            <summary>
-            Gets or sets the path to the file to convert from Markdown to MarkdownInfo.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.InputObject">
-            <summary>
-            Gets or sets the InputObject of type System.IO.FileInfo or string with content to convert from Markdown to MarkdownInfo.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.AsVT100EncodedString">
-            <summary>
-            Gets or sets if the Markdown document should be converted to a VT100 encoded string.
-            </summary>
-        </member>
-        <member name="M:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.BeginProcessing">
-            <summary>
-            Read the PSMarkdownOptionInfo set in SessionState.
-            </summary>
-        </member>
-        <member name="M:Microsoft.PowerShell.Commands.ConvertFromMarkdownCommand.ProcessRecord">
-            <summary>
-            Override ProcessRecord.
-            </summary>
-        </member>
         <member name="T:Microsoft.PowerShell.Commands.CSVHelper">
             <summary>
             This class is used to parse CSV text.
@@ -723,6 +728,36 @@
         <member name="P:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.NoTypeInformation">
             <summary>
             NoTypeInformation : The #TYPE line should not be generated. Default is true. Cannot specify with IncludeTypeInformation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.QuoteFields">
+            <summary>
+            Gets or sets list of fields to quote in output.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.UseQuotes">
+            <summary>
+            Gets or sets option to use or suppress quotes in output.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.QuoteKind">
+            <summary>
+            Kind of output quoting.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.QuoteKind.Never">
+            <summary>
+            Never quote output.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.QuoteKind.Always">
+            <summary>
+            Always quote output.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.QuoteKind.AsNeeded">
+            <summary>
+            Quote output as needed (a field contains used delimiter).
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.BaseCsvWritingCommand.WriteCsvLine(System.String)">
@@ -948,15 +983,16 @@
         </member>
         <member name="T:Microsoft.PowerShell.Commands.ExportCsvHelper">
             <summary>
-            Helper class for Export-Csvlper.
+            Helper class for Export-Csv and ConvertTo-Csv.
             </summary>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.ExportCsvHelper.#ctor(System.Management.Automation.PSCmdlet,System.Char)">
+        <member name="M:Microsoft.PowerShell.Commands.ExportCsvHelper.#ctor(System.Char,Microsoft.PowerShell.Commands.BaseCsvWritingCommand.QuoteKind,System.String[])">
             <summary>
+            Create ExportCsvHelper instance.
             </summary>
-            <param name="cmdlet"></param>
-            <param name="delimiter"></param>
-            <exception cref="T:System.ArgumentNullException">Throw if cmdlet is null.</exception>
+            <param name="delimiter">Delimiter char.</param>
+            <param name="quoteKind">Kind of quoting.</param>
+            <param name="quoteFields">List of fields to quote.</param>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ExportCsvHelper.BuildPropertyNames(System.Management.Automation.PSObject,System.Collections.Generic.IList{System.String})">
             <summary>
@@ -991,7 +1027,7 @@
             <param name="source">PSObject whose type to determine.</param>
             <returns>String with type information.</returns>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.ExportCsvHelper.EscapeAndAppendString(System.Text.StringBuilder,System.String)">
+        <member name="M:Microsoft.PowerShell.Commands.ExportCsvHelper.AppendStringWithEscapeAlways(System.Text.StringBuilder,System.String)">
             <summary>
             Escapes the " in string if necessary.
             Encloses the string in double quotes if necessary.
@@ -1132,6 +1168,11 @@
             The InstanceId of a Runspace to be debugged.
             </summary>
         </member>
+        <member name="P:Microsoft.PowerShell.Commands.DebugRunspaceCommand.BreakAll">
+            <summary>
+            Gets or sets a flag that tells PowerShell to automatically perform a BreakAll when the debugger is attached to the remote target.
+            </summary>
+        </member>
         <member name="M:Microsoft.PowerShell.Commands.DebugRunspaceCommand.EndProcessing">
             <summary>
             End processing.  Do work.
@@ -1156,31 +1197,6 @@
         <member name="M:Microsoft.PowerShell.Commands.DisablePSBreakpointCommand.ProcessBreakpoint(System.Management.Automation.Breakpoint)">
             <summary>
             Disables the given breakpoint.
-            </summary>
-        </member>
-        <member name="T:Microsoft.PowerShell.Commands.PSBreakpointCommandBase">
-            <summary>
-            Base class for Enable/Disable/Remove-PSBreakpoint.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.Breakpoint">
-            <summary>
-            The breakpoint to enable.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.Id">
-            <summary>
-            The Id of the breakpoint to enable.
-            </summary>
-        </member>
-        <member name="M:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.ProcessRecord">
-            <summary>
-            Gathers the list of breakpoints to process and calls ProcessBreakpoints.
-            </summary>
-        </member>
-        <member name="M:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.ProcessBreakpoint(System.Management.Automation.Breakpoint)">
-            <summary>
-            Process the given breakpoint.
             </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.EnablePSBreakpointCommand">
@@ -1546,6 +1562,24 @@
             Displays the hexadecimal equivalent of the input data.
             </summary>
         </member>
+        <member name="F:Microsoft.PowerShell.Commands.FormatHex._inputBuffer">
+            <summary>
+            For cases where a homogenous collection of bytes or other items are directly piped in, we collect all the
+            bytes in a List&lt;byte&gt; and then output the formatted result all at once in EndProcessing().
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.FormatHex._groupInput">
+            <summary>
+            Expect to group <see cref="P:Microsoft.PowerShell.Commands.FormatHex.InputObject"/>s by default. When receiving input that should not be grouped,
+            e.g., arrays, strings, FileInfo objects, this flag will be disabled until the next groupable
+            <see cref="P:Microsoft.PowerShell.Commands.FormatHex.InputObject"/> is received over the pipeline.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.FormatHex._lastInputType">
+            <summary>
+            Keep track of prior input types to determine if we're given a heterogenous collection.
+            </summary>
+        </member>
         <member name="P:Microsoft.PowerShell.Commands.FormatHex.Path">
             <summary>
             Gets or sets the path of file(s) to process.
@@ -1586,6 +1620,11 @@
             Implements the ProcessRecord method for the FormatHex command.
             </summary>
         </member>
+        <member name="M:Microsoft.PowerShell.Commands.FormatHex.EndProcessing">
+            <summary>
+            Implements the EndProcessing method for the FormatHex command.
+            </summary>
+        </member>
         <member name="M:Microsoft.PowerShell.Commands.FormatHex.ResolvePaths(System.String[],System.Boolean)">
             <summary>
             Validate each path provided and if valid, add to array of paths to process.
@@ -1609,14 +1648,14 @@
             </summary>
             <param name="path">The file path to retrieve content from for processing.</param>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.FormatHex.ProcessObjectContent(System.Management.Automation.PSObject)">
+        <member name="M:Microsoft.PowerShell.Commands.FormatHex.ProcessInputObjects(System.Management.Automation.PSObject)">
             <summary>
             Creates a byte array from the object passed to the cmdlet (based on type) and passes
             that array on to the WriteHexadecimal method to output.
             </summary>
             <param name="inputObject">The pipeline input object being processed.</param>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.FormatHex.ConvertToByteArray(System.Object)">
+        <member name="M:Microsoft.PowerShell.Commands.FormatHex.ConvertToBytes(System.Object)">
             <summary>
             Converts the input object to a byte array based on the underlying type for basic value types and strings,
             as well as enum values or arrays.
@@ -1626,11 +1665,22 @@
         </member>
         <member name="M:Microsoft.PowerShell.Commands.FormatHex.WriteHexadecimal(System.Span{System.Byte},System.String,System.Int64)">
             <summary>
-            Outputs the hexadecimial representation of the input data.
+            Outputs the hexadecimal representation of the input data.
             </summary>
-            <param name="inputBytes">Bytes for the hexadecimial representation.</param>
+            <param name="inputBytes">Bytes for the hexadecimal representation.</param>
             <param name="path">File path.</param>
             <param name="offset">Offset in the file.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.FormatHex.WriteHexadecimal(System.Span{System.Byte},System.Int64,System.String)">
+            <summary>
+            Outputs the hexadecimal representation of the input data.
+            </summary>
+            <param name="inputBytes">Bytes for the hexadecimal representation.</param>
+            <param name="offset">Offset in the file.</param>
+            <param name="label">
+            The label for the byte group. This may be a file path, a string value, or a
+            formatted identifying string for the group.
+            </param>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.FormatListCommand">
             <summary>
@@ -1808,6 +1858,173 @@
             FileInfo of file to clear read-only flag when operation is complete.
             </summary>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.OutPrinterCommand">
+            <summary>
+            Implementation for the out-printer command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutPrinterCommand.#ctor">
+            <summary>
+            Set inner command.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.OutPrinterCommand.Name">
+            <summary>
+            Optional name of the printer to print to.
+            The alias allows "lp -P printer".
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutPrinterCommand.BeginProcessing">
+            <summary>
+            Read command line parameters.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutPrinterCommand.InstantiateLineOutputInterface">
+            <summary>
+            One-time initialization: acquire a screen host interface by creating one on top of a memory buffer.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput">
+            <summary>
+            Implementation of the LineOutput interface for printer.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.RequiresBuffering">
+            <summary>
+            Full buffering for printer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.ExecuteBufferPlayBack(Microsoft.PowerShell.Commands.Internal.Format.LineOutput.DoPlayBackCall)">
+            <summary>
+            Do the printing on playback.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.ColumnNumber">
+            <summary>
+            The # of columns for the printer.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.RowNumber">
+            <summary>
+            The # of rows for the printer.
+            </summary>
+            <value></value>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.WriteLine(System.String)">
+            <summary>
+            Write a line to the output device.
+            </summary>
+            <param name="s">Line to write.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.#cctor">
+            <summary>
+            Used for static initializations like DefaultPrintFontName.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.#ctor(System.String)">
+            <summary>
+            Constructor for the class.
+            </summary>
+            <param name="printerName">Name of printer, if null use default printer.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.OnWriteLine(System.String)">
+            <summary>
+            Callback to be called when IConsole.WriteLine() is called by WriteLineHelper.
+            </summary>
+            <param name="s">String to write.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.OnWrite(System.String)">
+            <summary>
+            Callback to be called when Console.Write() is called by WriteLineHelper.
+            This is called when the WriteLineHelper needs to write a line whose length
+            is the same as the width of the screen buffer.
+            </summary>
+            <param name="s">String to write.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.DoPrint">
+            <summary>
+            Do the printing.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.CreateFont(System.Drawing.Graphics)">
+            <summary>
+            Helper to create a font.
+            If the font object exists, it does nothing.
+            Else, the a new object is created and verified.
+            </summary>
+            <param name="g">GDI+ graphics object needed for verification.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.VerifyFont(System.Drawing.Graphics)">
+            <summary>
+            Internal helper to verify that the font is fixed pitch. If the test fails,
+            it reverts to the default font.
+            </summary>
+            <param name="g">GDI+ graphics object needed for verification.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.pd_PrintPage(System.Object,System.Drawing.Printing.PrintPageEventArgs)">
+            <summary>
+            Event fired for each page to print.
+            </summary>
+            <param name="sender">Sender, not used.</param>
+            <param name="ev">Print page event.</param>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._printingInitialized">
+            <summary>
+            Flag for one-time initialization of the interface (columns, etc.).
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._playbackCall">
+            <summary>
+            Callback to ask the outputter to playback its cache.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._printerName">
+            <summary>
+            Name of the printer to print to. Null means default printer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._printFontName">
+            <summary>
+            Name of the font to use, if null the default is used.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._printFontSize">
+            <summary>
+            Font size.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.s_defaultPrintFontName">
+            <summary>
+            Default font, used if the printFont is not specified or if the
+            printFont is not fixed pitch.
+            </summary>
+            <remarks>
+            This default must be loaded from a resource file as different
+            cultures will have different defaults and the localizer would
+            know the default for different cultures.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput.DefaultPrintFontSize">
+            <summary>
+            Default size for the default font.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._deviceColumns">
+            <summary>
+            Number of columns on the sheet.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._lines">
+            <summary>
+            Text lines ready to print (after output cache playback).
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.Internal.Format.PrinterLineOutput._printFont">
+            <summary>
+            Cached font object.
+            </summary>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.OutStringCommand">
             <summary>
             Implementation for the out-string command.
@@ -1872,6 +2089,223 @@
             Buffer used when buffering until the end.
             </summary>
         </member>
+        <member name="M:Microsoft.PowerShell.Commands.ColumnInfo.LimitString(System.Object)">
+            <summary>
+            Auxiliar used in GetValue methods since the list does not deal well with unlimited sized lines.
+            </summary>
+            <param name="src">Source string.</param>
+            <returns>The source string limited in the number of lines.</returns>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.OutputModeOption">
+            <summary>
+            Enum for SelectionMode parameter.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.OutputModeOption.None">
+            <summary>
+            None is the default and it means OK and Cancel will not be present
+            and no objects will be written to the pipeline.
+            The selectionMode of the actual list will still be multiple.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.OutputModeOption.Single">
+            <summary>
+            Allow selection of one single item to be written to the pipeline.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.OutputModeOption.Multiple">
+             <summary>
+            Allow select of multiple items to be written to the pipeline.
+             </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.OutGridViewCommand">
+            <summary>
+            Implementation for the Out-GridView command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.#ctor">
+            <summary>
+            Constructor for OutGridView.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.OutGridViewCommand.InputObject">
+            <summary>
+            This parameter specifies the current pipeline object.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.OutGridViewCommand.Title">
+            <summary>
+            Gets/sets the title of the Out-GridView window.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.OutGridViewCommand.Wait">
+            <summary>
+            Get or sets a value indicating whether the cmdlet should wait for the window to be closed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.OutGridViewCommand.OutputMode">
+            <summary>
+            Get or sets a value indicating whether the selected items should be written to the pipeline
+            and if it should be possible to select multiple or single list items.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.OutGridViewCommand.PassThru">
+            <summary>
+            Gets or sets a value indicating whether the selected items should be written to the pipeline.
+            Setting this to true is the same as setting the OutputMode to Multiple.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.BeginProcessing">
+            <summary>
+            Provides a one-time, pre-processing functionality for the cmdlet.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.EndProcessing">
+            <summary>
+            Blocks depending on the wait and selected.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.ProcessRecord">
+            <summary>
+            Provides a record-by-record processing functionality for the cmdlet.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.StopProcessing">
+            <summary>
+            StopProcessing is called close the window when Ctrl+C in the command prompt.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.ConvertToString(System.Management.Automation.PSObject)">
+            <summary>
+            Converts the provided PSObject to a string preserving PowerShell formatting.
+            </summary>
+            <param name="liveObject">PSObject to be converted to a string.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.ProcessObject(System.Management.Automation.PSObject)">
+            <summary>
+            Execute formatting on a single object.
+            </summary>
+            <param name="input">Object to process.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.Dispose(System.Boolean)">
+            <summary>
+            Implements IDisposable logic.
+            </summary>
+            <param name="isDisposing">True if being called from Dispose.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.Dispose">
+            <summary>
+            Dispose method in IDisposable.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutGridViewCommand.Finalize">
+            <summary>
+            Finalizer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.OutWindowProxy._headerInfo">
+            <summary> Columns definition of the underlying Management List</summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.#ctor(System.String,Microsoft.PowerShell.Commands.OutputModeOption,Microsoft.PowerShell.Commands.OutGridViewCommand)">
+            <summary>
+            Initializes a new instance of the OutWindowProxy class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.AddColumns(System.String[],System.String[],System.Type[])">
+            <summary>
+            Adds columns to the output window.
+            </summary>
+            <param name="propertyNames">An array of property names to add.</param>
+            <param name="displayNames">An array of display names to add.</param>
+            <param name="types">An array of types to add.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.AddItem(System.Management.Automation.PSObject)">
+            <summary>
+            Adds an item to the out window.
+            </summary>
+            <param name="livePSObject">
+            The item to add.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.AddHeteroViewItem(System.Management.Automation.PSObject)">
+            <summary>
+            Adds an item to the out window.
+            </summary>
+            <param name="livePSObject">
+            The item to add.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.ShowWindow">
+            <summary>
+            Shows the out window if it has not already been displayed.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.Dispose(System.Boolean)">
+            <summary>
+            Implements IDisposable logic.
+            </summary>
+            <param name="isDisposing">True if being called from Dispose.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.Dispose">
+            <summary>
+            Dispose method in IDisposable.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.CloseWindow">
+            <summary>
+            Close the window if it has already been displayed.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.IsWindowClosed">
+            <summary>
+            Gets a value indicating whether the out window is closed.
+            </summary>
+            <returns>
+            True if the out window is closed, false otherwise.
+            </returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.GetLastException">
+            <summary>Returns any exception that has been thrown by previous method calls.</summary>
+            <returns>The thrown and caught exception. It returns null if no exceptions were thrown by any previous method calls.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.OutWindowProxy.GetSelectedItems">
+            <summary>
+            Return the selected item of the OutGridView.
+            </summary>
+            <returns>
+            The selected item.
+            </returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TableView.FilterActiveAssociationList(System.Collections.Generic.List{Microsoft.PowerShell.Commands.Internal.Format.MshResolvedExpressionParameterAssociation})">
+             <summary>
+             Method to filter resolved expressions as per table view needs.
+             For v1.0, table view supports only 10 properties.
+            
+             This method filters and updates "activeAssociationList" instance property.
+             </summary>
+             <returns>None.</returns>
+             <remarks>This method updates "activeAssociationList" instance property.</remarks>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.GetErrorCommand">
+            <summary>
+            Class for Get-Error implementation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetErrorCommand.InputObject">
+            <summary>
+            Gets or sets the error object to resolve.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetErrorCommand.Newest">
+            <summary>
+            Gets or sets the number of error objects to resolve starting with newest first.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetErrorCommand.ProcessRecord">
+            <summary>
+            Process the error object.
+            </summary>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.BreakpointType">
             <summary>
             Types of breakpoints.
@@ -1889,7 +2323,7 @@
         </member>
         <member name="T:Microsoft.PowerShell.Commands.GetPSBreakpointCommand">
             <summary>
-            This class implements Remove-PSBreakpoint.
+            This class implements Get-PSBreakpoint.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.GetPSBreakpointCommand.Script">
@@ -2022,6 +2456,11 @@
             Allows user to override the date/time object that will be processed.
             </summary>
         </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetDateCommand.UnixTimeSeconds">
+            <summary>
+            Gets or sets whether to treat a numeric input as ticks, or unix time.
+            </summary>
+        </member>
         <member name="P:Microsoft.PowerShell.Commands.GetDateCommand.Year">
             <summary>
             Allows the user to override the year.
@@ -2069,7 +2508,12 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.GetDateCommand.Format">
             <summary>
-            Unix format string.
+            DotNet format string.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetDateCommand.AsUTC">
+            <summary>
+            Gets or sets a value that converts date to UTC before formatting.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.GetDateCommand.ProcessRecord">
@@ -2192,6 +2636,14 @@
             Perform common error checks.
             Populate source code.
             </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetFileHashCommand.ComputeFileHash(System.String,System.String@)">
+            <summary>
+            Read the file and calculate the hash.
+            </summary>
+            <param name="path">Path to file which will be hashed.</param>
+            <param name="hash">Will contain the hash of the file content.</param>
+            <returns>Boolean value indicating whether the hash calculation succeeded or failed.</returns>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.GetFileHashCommand.WriteHashResult(System.String,System.String,System.String)">
             <summary>
@@ -2382,12 +2834,17 @@
             Number of items to output (number of list items or of numbers).
             </summary>
         </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetRandomCommand.Shuffle">
+            <summary>
+            Gets or sets whether the command should return all input objects in randomized order.
+            </summary>
+        </member>
         <member name="M:Microsoft.PowerShell.Commands.GetRandomCommand.GetRandomInt64(System.Int64,System.Int64)">
             <summary>
             Get a random Int64 type number.
             </summary>
-            <param name="min"></param>
-            <param name="max"></param>
+            <param name="minValue"></param>
+            <param name="maxValue"></param>
             <returns></returns>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.GetRandomCommand.BeginProcessing">
@@ -3169,6 +3626,16 @@
             Override EndProcessing.
             </summary>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.PSMarkdownOptionInfoCache">
+            <summary>
+            The class manages whether we should use a module scope variable or concurrent dictionary for storing the set PSMarkdownOptions.
+            When we have a moduleInfo available we use the module scope variable.
+            In case of built-in modules, they are loaded as snapins when we are hosting PowerShell.
+            We use runspace Id as the key for the concurrent dictionary to have the functionality of separate settings per runspace.
+            Force loading the module does not unload the nested modules and hence we cannot use IModuleAssemblyCleanup to remove items from the dictionary.
+            Because of these reason, we continue using module scope variable when moduleInfo is available.
+            </summary>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.MatchInfoContext">
             <summary>
             Context information about a match.
@@ -3226,6 +3693,35 @@
             Gets or sets the text of the matching line.
             </summary>
             <value>The text of the matching line.</value>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.MatchInfo._emphasize">
+            <summary>
+            Gets or sets a value indicating whether the matched portion of the string is highlighted.
+            </summary>
+            <value>Whether the matched portion of the string is highlighted with the negative VT sequence.</value>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.MatchInfo._matchIndexes">
+            <summary>
+            Stores the starting index of each match within the line.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.MatchInfo._matchLengths">
+            <summary>
+            Stores the length of each match within the line.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.MatchInfo.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.MatchInfo"/> class with emphasis disabled.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.MatchInfo.#ctor(System.Collections.Generic.IReadOnlyList{System.Int32},System.Collections.Generic.IReadOnlyList{System.Int32})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.MatchInfo"/> class with emphasized matched text.
+            Used when virtual terminal sequences are supported.
+            </summary>
+            <param name="matchIndexes">Sets the matchIndexes.</param>
+            <param name="matchLengths">Sets the matchLengths.</param>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.MatchInfo.Filename">
             <summary>
@@ -3287,6 +3783,30 @@
             </summary>
             <param name="directory">Directory to use as the root when calculating the relative path.</param>
             <returns>The string representation of the match object.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.MatchInfo.ToString(System.String,System.String)">
+            <summary>
+            Returns the string representation of the match object with the matched line passed
+            in as <paramref name="line"/> and trims the path to be relative to
+            the<paramref name="directory"/> argument.
+            </summary>
+            <param name="directory">Directory to use as the root when calculating the relative path.</param>
+            <param name="line">Line that the match occurs in.</param>
+            <returns>The string representation of the match object.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.MatchInfo.ToEmphasizedString(System.String)">
+            <summary>
+            Returns the string representation of the match object same format as ToString()
+            and inverts the color of the matched text if virtual terminal is supported.
+            </summary>
+            <param name="directory">Directory to use as the root when calculating the relative path.</param>
+            <returns>The string representation of the match object with matched text inverted.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.MatchInfo.EmphasizeLine">
+            <summary>
+            Surrounds the matched text with virtual terminal sequences to invert it's color. Used in ToEmphasizedString.
+            </summary>
+            <returns>The matched line with matched text inverted.</returns>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.MatchInfo.FormatLine(System.String,System.Int32,System.String,System.String)">
             <summary>
@@ -3516,6 +4036,11 @@
             ContextTracker that does not work for the case when pre- and post context is 0.
             </summary>
         </member>
+        <member name="P:Microsoft.PowerShell.Commands.SelectStringCommand.Culture">
+            <summary>
+            Gets or sets a culture name.
+            </summary>
+        </member>
         <member name="P:Microsoft.PowerShell.Commands.SelectStringCommand.InputObject">
             <summary>
             Gets or sets the current pipeline object.
@@ -3536,6 +4061,12 @@
             <summary>
             Gets or sets literal files to read from.
             Globbing is not done on these.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.SelectStringCommand.Raw">
+            <summary>
+            Gets or sets a value indicating if only string values containing matched lines should be returned.
+            If not (default) return MatchInfo (or bool objects, when Quiet is passed).
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SelectStringCommand.SimpleMatch">
@@ -3561,6 +4092,11 @@
             This is the Unix functionality this switch is intended to mimic;
             the actual action of this option is to stop after the first match
             is found and returned from any particular file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.SelectStringCommand.NoEmphasis">
+            <summary>
+            Gets or sets a value indicating if highlighting should be disabled.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SelectStringCommand.Include">
@@ -3676,6 +4212,11 @@
             </summary>
             <param name="filename">The filename to test.</param>
             <returns>True if the filename is acceptable.</returns>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ValidateMatchStringCultureNamesGenerator">
+            <summary>
+            Get list of valid culture names for ValidateSet attribute.
+            </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.MeasureInfo">
             <summary>
@@ -4347,6 +4888,57 @@
             This is the row of the OrderMatrix.
             </summary>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.PSBreakpointAccessorCommandBase">
+            <summary>
+            Base class for Get/Set-PSBreakpoint.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.PSBreakpointCommandBase">
+            <summary>
+            Base class for PSBreakpoint cmdlets.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.Runspace">
+            <summary>
+            Gets or sets the runspace where the breakpoints will be used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.BeginProcessing">
+            <summary>
+            Identifies the default runspace.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.PSBreakpointCommandBase.ProcessBreakpoint(System.Management.Automation.Breakpoint)">
+            <summary>
+            Write the given breakpoint out to the pipeline, decorated with the runspace instance id if appropriate.
+            </summary>
+            <param name="breakpoint">The breakpoint to write to the pipeline.</param>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.PSBreakpointUpdaterCommandBase">
+            <summary>
+            Base class for Enable/Disable/Remove-PSBreakpoint.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.PSBreakpointUpdaterCommandBase.Breakpoint">
+            <summary>
+            Gets or sets the breakpoint to enable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.PSBreakpointUpdaterCommandBase.Id">
+            <summary>
+            Gets or sets the Id of the breakpoint to enable.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.PSBreakpointUpdaterCommandBase.Runspace">
+            <summary>
+            Gets or sets the runspace where the breakpoints will be used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.PSBreakpointUpdaterCommandBase.ProcessRecord">
+            <summary>
+            Gathers the list of breakpoints to process and calls ProcessBreakpoints.
+            </summary>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.ReadHostCommand">
             <summary>
             Retrieves input from the host virtual console and writes it to the pipeline output.
@@ -4364,7 +4956,12 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.ReadHostCommand.AsSecureString">
             <summary>
-            Set to no echo the input as is is typed.
+            Gets or sets to no echo the input as is typed. If set then the cmdlet returns a secure string.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ReadHostCommand.MaskInput">
+            <summary>
+            Gets or sets whether the console will echo the input as is typed. If set then the cmdlet returns a regular string.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ReadHostCommand.BeginProcessing">
@@ -4731,36 +5328,37 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Action">
             <summary>
-            The action to take when hitting this breakpoint.
+            Gets or sets the action to take when hitting this breakpoint.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Column">
             <summary>
-            The column to set the breakpoint on.
+            Gets or sets the column to set the breakpoint on.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Command">
             <summary>
-            The command(s) to set the breakpoint on.
+            Gets or sets the command(s) to set the breakpoint on.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Line">
             <summary>
-            The line to set the breakpoint on.
+            Gets or sets the line to set the breakpoint on.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Script">
             <summary>
-            The script to set the breakpoint on.
+            Gets or sets the script to set the breakpoint on.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Variable">
             <summary>
-            The variables to set the breakpoint(s) on.
+            Gets or sets the variables to set the breakpoint(s) on.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.Mode">
             <summary>
+            Gets or sets the access type for variable breakpoints to break on.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.SetPSBreakpointCommand.BeginProcessing">
@@ -4806,6 +5404,536 @@
         <member name="M:Microsoft.PowerShell.Commands.SetDateCommand.ProcessRecord">
             <summary>
             Set the date.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandCommand">
+            <summary>
+            Show-Command displays a GUI for a cmdlet, or for all cmdlets if no specific cmdlet is specified.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._hasOpenedWindow">
+            <summary>
+            Set to true when ProcessRecord is reached, since it will always open a window.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._passThrough">
+            <summary>
+            Determines if the command should be sent to the pipeline as a string instead of run.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._showCommandProxy">
+            <summary>
+            Uses ShowCommandProxy to invoke WPF GUI object.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._commands">
+            <summary>
+            Data container for all cmdlets. This is populated when show-command is called with no command name.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._importedModules">
+            <summary>
+            List of modules that have been loaded indexed by module name.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._errors">
+            <summary>
+            Record the EndProcessing error.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._noCommonParameter">
+            <summary>
+            Field used for the NoCommonParameter parameter.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand._commandViewModelObj">
+            <summary>
+            Object used for ShowCommand with a command name that holds the view model created for the command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.Finalize">
+            <summary>
+            Finalizes an instance of the ShowCommandCommand class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandCommand.Name">
+            <summary>
+            Gets or sets the command name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandCommand.Height">
+            <summary>
+            Gets or sets the Width.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandCommand.Width">
+            <summary>
+            Gets or sets the Width.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandCommand.NoCommonParameter">
+            <summary>
+            Gets or sets a value indicating Common Parameters should not be displayed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandCommand.ErrorPopup">
+            <summary>
+            Gets or sets a value indicating errors should not cause a message window to be displayed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandCommand.PassThru">
+            <summary>
+            Gets or sets a value indicating the command should be sent to the pipeline as a string instead of run.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.RunScript(System.String)">
+            <summary>
+            Executes a PowerShell script, writing the output objects to the pipeline.
+            </summary>
+            <param name="script">Script to execute.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.Dispose">
+            <summary>
+            Dispose method in IDisposable.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.BeginProcessing">
+            <summary>
+            Initialize a proxy instance for show-command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.ProcessRecord">
+            <summary>
+            ProcessRecord with or without CommandName.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.EndProcessing">
+            <summary>
+            Optionally displays errors in a message.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.StopProcessing">
+            <summary>
+            StopProcessing is called close the window when user press Ctrl+C in the command prompt.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.RunScriptSilentlyAndWithErrorHookup(System.String)">
+            <summary>
+            Runs the script in a new PowerShell instance and hooks up error stream to potentially display error popup.
+            This method has the inconvenience of not showing to the console user the script being executed.
+            </summary>
+            <param name="script">Script to be run.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.IssueErrorForNoCommand">
+            <summary>
+            Issues an error when this.commandName was not found.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.IssueErrorForMoreThanOneCommand">
+            <summary>
+            Issues an error when there is more than one command matching this.commandName.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.GetCommandInfoAndModules(System.Management.Automation.CommandInfo@,System.Collections.Generic.Dictionary{System.String,Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandModuleInfo}@)">
+            <summary>
+            Called from CommandProcessRecord to run the command that will get the CommandInfo and list of modules.
+            </summary>
+            <param name="command">Command to be retrieved.</param>
+            <param name="modules">List of loaded modules.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.CanProcessRecordForOneCommand">
+            <summary>
+            ProcessRecord when a command name is specified.
+            </summary>
+            <returns>True if there was no exception processing this record.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.CanProcessRecordForAllCommands">
+            <summary>
+            ProcessRecord when a command name is not specified.
+            </summary>
+            <returns>True if there was no exception processing this record.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.WaitForWindowClosedOrHelpNeeded">
+            <summary>
+            Waits until the window has been closed answering HelpNeeded events.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.Output_DataAdded(System.Object,System.Management.Automation.DataAddedEventArgs)">
+            <summary>
+            Writes the output of a script being run into the pipeline.
+            </summary>
+            <param name="sender">Output collection.</param>
+            <param name="e">Output event.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.Error_DataAdded(System.Object,System.Management.Automation.DataAddedEventArgs)">
+            <summary>
+            Writes the errors of a script being run into the pipeline.
+            </summary>
+            <param name="sender">Error collection.</param>
+            <param name="e">Error event.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.Dispose(System.Boolean)">
+            <summary>
+            Implements IDisposable logic.
+            </summary>
+            <param name="isDisposing">True if being called from Dispose.</param>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods">
+            <summary>
+            Wraps interop code for console input buffer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.STD_INPUT_HANDLE">
+            <summary>
+            Constant used in calls to GetStdHandle.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.AddToConsoleInputBuffer(System.String,System.Boolean)">
+            <summary>
+            Adds a string to the console input buffer.
+            </summary>
+            <param name="str">String to add to console input buffer.</param>
+            <param name="newLine">True to add Enter after the string.</param>
+            <returns>True if it was successful in adding all characters to console input buffer.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.GetStdHandle(System.Int32)">
+            <summary>
+            Gets the console handle.
+            </summary>
+            <param name="nStdHandle">Which console handle to get.</param>
+            <returns>The console handle.</returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.WriteConsoleInput(System.IntPtr,Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD[],System.UInt32,System.UInt32@)">
+            <summary>
+            Writes to the console input buffer.
+            </summary>
+            <param name="hConsoleInput">Console handle.</param>
+            <param name="lpBuffer">Inputs to be written.</param>
+            <param name="nLength">Number of inputs to be written.</param>
+            <param name="lpNumberOfEventsWritten">Returned number of inputs actually written.</param>
+            <returns>0 if the function fails.</returns>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD">
+            <summary>
+            A record to be added to the console buffer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD.KEY_EVENT">
+            <summary>
+            The proper event type for a KeyEvent KEY_EVENT_RECORD.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD.EventType">
+            <summary>
+            Input buffer event type.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD.KeyEvent">
+            <summary>
+            The actual event. The original structure is a union of many others, but this is the largest of them.
+            And we don't need other kinds of events.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD.SetInputRecord(Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.INPUT_RECORD@,System.Char)">
+            <summary>
+            Sets the necessary fields of <paramref name="inputRecord"/> for a KeyDown event for the <paramref name="character"/>
+            </summary>
+            <param name="inputRecord">Input record to be set.</param>
+            <param name="character">Character to set the record with.</param>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD">
+            <summary>
+            Type of INPUT_RECORD which is a key.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD.bKeyDown">
+            <summary>
+            True for key down and false for key up, but only needed if wVirtualKeyCode is used.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD.wRepeatCount">
+            <summary>
+            Repeat count.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD.wVirtualKeyCode">
+            <summary>
+            Virtual key code.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD.wVirtualScanCode">
+            <summary>
+            Virtual key scan code.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD.UnicodeChar">
+            <summary>
+            Character in input. If this is specified, wVirtualKeyCode, and others don't need to be.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.ShowCommandCommand.ConsoleInputWithNativeMethods.KEY_EVENT_RECORD.dwControlKeyState">
+            <summary>
+            State of keys like Shift and control.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo">
+            <summary>
+            Implements a facade around CommandInfo and its deserialized counterpart.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.#ctor(System.Management.Automation.CommandInfo)">
+            <summary>
+            Creates an instance of the ShowCommandCommandInfo class based on a CommandInfo object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.#ctor(System.Management.Automation.PSObject)">
+            <summary>
+            Creates an instance of the ShowCommandCommandInfo class based on a PSObject object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.GetObjectEnumerable(System.Collections.IEnumerable)">
+            <summary>
+            Builds a strongly typed IEnumerable{object} out of an IEnumerable.
+            </summary>
+            <param name="enumerable">
+            The object to enumerate.
+            </param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.Name">
+            <summary>
+            A string representing the definition of the command.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.ModuleName">
+            <summary>
+            A string representing module the command belongs to.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.Module">
+            <summary>
+            A reference to the module the command came from.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.CommandType">
+            <summary>
+            An enumeration of the command types this command belongs to.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.Definition">
+            <summary>
+            A string representing the definition of the command.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandCommandInfo.ParameterSets">
+            <summary>
+            A string representing the definition of the command.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandModuleInfo">
+            <summary>
+            Implements a facade around PSModuleInfo and its deserialized counterpart.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandModuleInfo.#ctor(System.Management.Automation.PSModuleInfo)">
+            <summary>
+            Creates an instance of the ShowCommandModuleInfo class based on a CommandInfo object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandModuleInfo.#ctor(System.Management.Automation.PSObject)">
+            <summary>
+            Creates an instance of the ShowCommandModuleInfo class based on a PSObject object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandModuleInfo.Name">
+            <summary>
+            Gets the name of this module.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo">
+            <summary>
+            Implements a facade around ShowCommandParameterInfo and its deserialized counterpart.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.#ctor(System.Management.Automation.CommandParameterInfo)">
+            <summary>
+            Creates an instance of the ShowCommandParameterInfo class based on a CommandParameterInfo object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.#ctor(System.Management.Automation.PSObject)">
+            <summary>
+            Creates an instance of the ShowCommandParameterInfo class based on a PSObject object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.Name">
+            <summary>
+            Gets the name of the parameter.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.IsMandatory">
+            <remarks>
+            True if the parameter is dynamic, or false otherwise.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.ValueFromPipeline">
+            <summary>
+            Gets whether the parameter can take values from the incoming pipeline object.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.ParameterType">
+            <summary>
+            Gets the type of the parameter.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.ValidParamSetValues">
+            <summary>
+            The possible values of this parameter.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.HasParameterSet">
+            <summary>
+            Gets whether the parameter has a parameter set.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterInfo.Position">
+            <summary>
+            Gets the position in which the parameter can be specified on the command line
+            if not named. If the returned value is int.MinValue then the parameter must be named.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterSetInfo">
+            <summary>
+            Implements a facade around CommandParameterSetInfo and its deserialized counterpart.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterSetInfo.#ctor(System.Management.Automation.CommandParameterSetInfo)">
+            <summary>
+            Creates an instance of the ShowCommandParameterSetInfo class based on a CommandParameterSetInfo object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterSetInfo.#ctor(System.Management.Automation.PSObject)">
+            <summary>
+            Creates an instance of the ShowCommandParameterSetInfo class based on a PSObject object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterSetInfo.Name">
+            <summary>
+            Gets the name of the parameter set.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterSetInfo.IsDefault">
+            <summary>
+            Gets whether the parameter set is the default parameter set.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterSetInfo.Parameters">
+            <summary>
+            Gets the parameter information for the parameters in this parameter set.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType">
+            <summary>
+            Implements a facade around ShowCommandParameterInfo and its deserialized counterpart.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.#ctor(System.Type)">
+            <summary>
+            Creates an instance of the ShowCommandParameterType class based on a Type object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.#ctor(System.Management.Automation.PSObject)">
+            <summary>
+            Creates an instance of the ShowCommandParameterType class based on a Type object.
+            </summary>
+            <param name="other">
+            The object to wrap.
+            </param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.FullName">
+            <summary>
+            The full name of the outermost type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.IsEnum">
+            <summary>
+            Whether or not this type is an enum.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.ImplementsDictionary">
+            <summary>
+            Whether or not this type is an dictionary.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.HasFlagAttribute">
+            <summary>
+            Whether or not this enum has a flag attribute.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.IsArray">
+            <summary>
+            Whether or not this type is an array type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.ElementType">
+            <summary>
+            Gets the inner type, if this corresponds to an array type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.IsString">
+            <summary>
+            Whether or not this type is a string.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.IsScriptBlock">
+            <summary>
+            Whether or not this type is an script block.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.IsBoolean">
+            <summary>
+            Whether or not this type is a bool.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.IsSwitch">
+            <summary>
+            Whether or not this type is a switch parameter.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ShowCommandExtension.ShowCommandParameterType.EnumValues">
+            <summary>
+            If this is an enum value, return the list of potential values.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.ShowCommandProxy">
+            <summary>
+            Help show-command create WPF object and invoke WPF windows with the
+            Microsoft.PowerShell.Commands.ShowCommandInternal.ShowCommandHelperhelp type defined in Microsoft.PowerShell.GraphicalHost.dll.
             </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.ShowMarkdownCommand">
@@ -5011,12 +6139,12 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestJsonCommand.Json">
             <summary>
-            An JSON to be validated.
+            Gets or sets JSON string to be validated.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestJsonCommand.Schema">
             <summary>
-            A schema to validate the JSON against.
+            Gets or sets schema to validate the JSON against.
             This is optional parameter.
             If the parameter is absent the cmdlet only attempts to parse the JSON string.
             If the parameter present the cmdlet attempts to parse the JSON string and
@@ -5024,14 +6152,29 @@
             the cmdlet parses the schema doing implicitly check the schema too.
             </summary>
         </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestJsonCommand.SchemaFile">
+            <summary>
+            Gets or sets path to the file containg schema to validate the JSON string against.
+            This is optional parameter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TestJsonCommand.UnwrapException(System.Exception)">
+            <summary>
+            Process all exceptions in the AggregateException.
+            Unwrap TargetInvocationException if any and
+            rethrow inner exception without losing the stack trace.
+            </summary>
+            <param name="e">AggregateException to be unwrapped.</param>
+            <returns>Return value is unreachable since we always rethrow.</returns>
+        </member>
         <member name="M:Microsoft.PowerShell.Commands.TestJsonCommand.BeginProcessing">
             <summary>
-            Prepare an JSON schema.
+            Prepare a JSON schema.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.TestJsonCommand.ProcessRecord">
             <summary>
-            Validate an JSON.
+            Validate a JSON.
             </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.MeasureCommandCommand">
@@ -5601,6 +6744,57 @@
             <param name="cmdlet"></param>
             <returns></returns>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.UpdateListCommand">
+            <summary>
+            This cmdlet updates the property of incoming objects and passes them to the
+            pipeline. This cmdlet also returns a .NET object with properties that
+            defines the update action on a list.
+            This cmdlet is most helpful when the cmdlet author wants the user to do
+            update action on object list that are not directly exposed through
+            cmdlet parameter. One wants to update a property value which is a list
+            (multi-valued parameter for a cmdlet), without exposing the list.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.UpdateListCommand.Add">
+            <summary>
+            The following is the definition of the input parameter "Add".
+            Objects to add to the list.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.UpdateListCommand.Remove">
+            <summary>
+            The following is the definition of the input parameter "Remove".
+            Objects to be removed from the list.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.UpdateListCommand.Replace">
+            <summary>
+            The following is the definition of the input parameter "Replace".
+            Objects in this list replace the objects in the target list.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.UpdateListCommand.InputObject">
+            <summary>
+            The following is the definition of the input parameter "InputObject".
+            List of InputObjects where the updates needs to applied to the specific property.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.UpdateListCommand.Property">
+            <summary>
+            The following is the definition of the input parameter "Property".
+            Defines which property of the input object should be updated with Add and Remove actions.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.UpdateListCommand.ProcessRecord">
+            <summary>
+            ProcessRecord method.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.UpdateListCommand.EndProcessing">
+            <summary>
+            EndProcessing method.
+            </summary>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.UpdateTypeDataCommand">
             <summary>
             This class implements update-typeData command.
@@ -5839,6 +7033,11 @@
             Big Endian Unicode encoding.
             </summary>
         </member>
+        <member name="F:Microsoft.PowerShell.Commands.TextEncodingType.BigEndianUTF32">
+            <summary>
+            Big Endian UTF32 encoding.
+            </summary>
+        </member>
         <member name="F:Microsoft.PowerShell.Commands.TextEncodingType.Utf8">
             <summary>
             UTF8 encoding.
@@ -5889,7 +7088,7 @@
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ByteCollection.#ctor(System.UInt32,System.Byte[],System.String)">
             <summary>
-            ByteCollection constructor.
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/> class.
             </summary>
             <param name="offset">The Offset address to be used while displaying the bytes in the collection.</param>
             <param name="value">Underlying bytes stored in the collection.</param>
@@ -5897,7 +7096,7 @@
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ByteCollection.#ctor(System.UInt64,System.Byte[],System.String)">
             <summary>
-            Initializes a new instance of ByteCollection.
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/> class.
             </summary>
             <param name="offset">The Offset address to be used while displaying the bytes in the collection.</param>
             <param name="value">Underlying bytes stored in the collection.</param>
@@ -5905,21 +7104,31 @@
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ByteCollection.#ctor(System.UInt32,System.Byte[])">
             <summary>
-            ByteCollection constructor.
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/> class.
             </summary>
             <param name="offset">The Offset address to be used while displaying the bytes in the collection.</param>
             <param name="value">Underlying bytes stored in the collection.</param>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ByteCollection.#ctor(System.UInt64,System.Byte[])">
             <summary>
-            ByteCollection constructor.
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/> class.
             </summary>
             <param name="offset">The Offset address to be used while displaying the bytes in the collection.</param>
             <param name="value">Underlying bytes stored in the collection.</param>
         </member>
+        <member name="M:Microsoft.PowerShell.Commands.ByteCollection.#ctor(System.UInt64,System.String,System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/> class.
+            </summary>
+            <param name="offset">The Offset address to be used while displaying the bytes in the collection.</param>
+            <param name="label">
+            The label for the byte group. This may be a file path or a formatted identifying string for the group.
+            </param>
+            <param name="value">Underlying bytes stored in the collection.</param>
+        </member>
         <member name="M:Microsoft.PowerShell.Commands.ByteCollection.#ctor(System.Byte[])">
             <summary>
-            ByteCollection constructor.
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/> class.
             </summary>
             <param name="value">Underlying bytes stored in the collection.</param>
         </member>
@@ -5942,6 +7151,28 @@
             <summary>
             Gets the path of the file whose contents are wrapped in the ByteCollection.
             </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ByteCollection.HexOffset">
+            <summary>
+            Gets the hexadecimal representation of the <see cref="P:Microsoft.PowerShell.Commands.ByteCollection.Offset64"/> value.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ByteCollection.Label">
+            <summary>
+            Gets the type of the input objects used to create the <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ByteCollection.HexBytes">
+            <summary>
+            Gets a space-delimited string of the <see cref="P:Microsoft.PowerShell.Commands.ByteCollection.Bytes"/> in this <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/>
+            in hexadecimal format.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ByteCollection.Ascii">
+            <summary>
+            Gets the ASCII string representation of the <see cref="P:Microsoft.PowerShell.Commands.ByteCollection.Bytes"/> in this <see cref="T:Microsoft.PowerShell.Commands.ByteCollection"/>.
+            </summary>
+            <value></value>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ByteCollection.ToString">
             <summary>
@@ -6275,30 +7506,36 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Content">
             <summary>
-            Gets the Content property.
+            Gets the text body content of this response.
             </summary>
+            <value>
+            Content of the response body, decoded using <see cref="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Encoding"/>,
+            if the <c>Content-Type</c> response header is a recognized text
+            type.  Otherwise <c>null</c>.
+            </value>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Encoding">
             <summary>
-            Gets the Encoding that was used to decode the Content.
+            Gets the encoding of the text body content of this response.
             </summary>
             <value>
-            The Encoding used to decode the Content; otherwise, a null reference if the content is not text.
+            Encoding of the response body from the <c>Content-Type</c> header,
+            or <c>null</c> if the encoding could not be determined.
             </value>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.InputFields">
             <summary>
-            Gets the Fields property.
+            Gets the HTML input field elements parsed from <see cref="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Content"/>.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Links">
             <summary>
-            Gets the Links property.
+            Gets the HTML a link elements parsed from <see cref="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Content"/>.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Images">
             <summary>
-            Gets the Images property.
+            Gets the HTML img elements parsed from <see cref="P:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.Content"/>.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.BasicHtmlWebResponseObject.InitializeContent">
@@ -6338,6 +7575,11 @@
         <member name="P:Microsoft.PowerShell.Commands.InvokeRestMethodCommand.ResponseHeadersVariable">
             <summary>
             Gets or sets the ResponseHeadersVariable property.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.InvokeRestMethodCommand.StatusCodeVariable">
+            <summary>
+            Gets or sets the variable name to use for storing the status code from the response.
             </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.InvokeRestMethodCommand.RestReturnType">
@@ -6415,6 +7657,11 @@
         <member name="F:Microsoft.PowerShell.Commands.WebSslProtocol.Tls12">
             <summary>
             Specifies the TLS 1.2 security protocol. The TLS protocol is defined in IETF RFC 5246.
+            </summary>
+        </member>
+        <member name="F:Microsoft.PowerShell.Commands.WebSslProtocol.Tls13">
+            <summary>
+            Specifies the TLS 1.3 security protocol. The TLS protocol is defined in IETF RFC 8446.
             </summary>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.WebRequestPSCmdlet">
@@ -6606,6 +7853,11 @@
             Resumes downloading a partial or incomplete file. OutFile is required.
             </summary>
         </member>
+        <member name="P:Microsoft.PowerShell.Commands.WebRequestPSCmdlet.SkipHttpErrorCheck">
+            <summary>
+            Gets or sets whether to skip checking HTTP status for error codes.
+            </summary>
+        </member>
         <member name="P:Microsoft.PowerShell.Commands.WebRequestPSCmdlet.ShouldResume">
             <summary>
             Determines whether writing to a file should Resume and append rather than overwrite.
@@ -6734,7 +7986,7 @@
         </member>
         <member name="M:Microsoft.PowerShell.Commands.WebRequestPSCmdlet.AddMultipartContent(System.Object,System.Object,System.Net.Http.MultipartFormDataContent,System.Boolean)">
             <summary>
-            Adds content to a <see cref="T:System.Net.Http.MultipartFormDataContent" />. Object type detection is used to determine if the value is String, File, or Collection.
+            Adds content to a <see cref="T:System.Net.Http.MultipartFormDataContent" />. Object type detection is used to determine if the value is string, File, or Collection.
             </summary>
             <param name="fieldName">The Field Name to use.</param>
             <param name="fieldValue">The Field Value to use.</param>
@@ -6777,33 +8029,36 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.WebResponseObject.Content">
             <summary>
-            Gets or protected sets the Content property.
+            Gets or protected sets the response body content.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.WebResponseObject.StatusCode">
             <summary>
-            Gets the StatusCode property.
+            Gets the response status code.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.WebResponseObject.StatusDescription">
             <summary>
-            Gets the StatusDescription property.
+            Gets the response status description.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.WebResponseObject.RawContentStream">
             <summary>
-            Gets the RawContentStream property.
+            Gets the response body content as a <see cref="T:System.IO.MemoryStream"/>.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.WebResponseObject.RawContentLength">
             <summary>
-            Gets the RawContentLength property.
+            Gets the length (in bytes) of <see cref="P:Microsoft.PowerShell.Commands.WebResponseObject.RawContentStream"/>.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.WebResponseObject.RawContent">
             <summary>
-            Gets or protected sets the RawContent property.
+            Gets or protected sets the full response content.
             </summary>
+            <value>
+            Full response content, including the HTTP status line, headers, and body.
+            </value>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.WebResponseObject.InitializeContent">
             <summary>
@@ -6868,6 +8123,12 @@
         <member name="P:Microsoft.PowerShell.Commands.ConvertFromJsonCommand.Depth">
             <summary>
             Gets or sets the maximum depth the JSON input is allowed to have. By default, it is 1024.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ConvertFromJsonCommand.NoEnumerate">
+            <summary>
+            Gets or sets the switch to prevent ConvertFrom-Json from unravelling collections during deserialization, instead passing them as a single
+            object through the pipeline.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.ConvertFromJsonCommand.ProcessRecord">
@@ -7309,14 +8570,15 @@
             <summary>
             </summary>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.StreamHelper.SaveStreamToFile(System.IO.Stream,System.String,System.Management.Automation.PSCmdlet)">
+        <member name="M:Microsoft.PowerShell.Commands.StreamHelper.SaveStreamToFile(System.IO.Stream,System.String,System.Management.Automation.PSCmdlet,System.Threading.CancellationToken)">
             <summary>
             Saves content from stream into filePath.
             Caller need to ensure <paramref name="stream"/> position is properly set.
             </summary>
-            <param name="stream"></param>
-            <param name="filePath"></param>
-            <param name="cmdlet"></param>
+            <param name="stream">Input stream.</param>
+            <param name="filePath">Output file name.</param>
+            <param name="cmdlet">Current cmdlet (Invoke-WebRequest or Invoke-RestMethod).</param>
+            <param name="cancellationToken">CancellationToken to track the cmdlet cancellation.</param>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.WebCmdletElementCollection">
             <summary>
@@ -8496,10 +9758,40 @@
             Value of name attribute for dictionary value part in dictionary entry.
             </summary>
         </member>
+        <member name="T:System.Management.Automation.Runspaces.RunspaceAttribute">
+            <summary>
+            Defines the attribute used to designate a cmdlet parameter as one that
+            should accept runspaces.
+            </summary>
+        </member>
+        <member name="M:System.Management.Automation.Runspaces.RunspaceAttribute.Transform(System.Management.Automation.EngineIntrinsics,System.Object)">
+            <summary>
+            Transforms the input data to a Runspace.
+            </summary>
+            <param name="engineIntrinsics">
+            The engine APIs for the context under which the transformation is being
+            made.
+            </param>
+            <param name="inputData">
+            If a string, the transformation uses the input as the runspace name.
+            If an int, the transformation uses the input as the runspace ID.
+            If a guid, the transformation uses the input as the runspace GUID.
+            If already a Runspace, the transform does nothing.
+            </param>
+            <returns>A runspace object representing the inputData.</returns>
+        </member>
+        <member name="P:System.Management.Automation.Runspaces.RunspaceAttribute.TransformNullOptionalParameters">
+            <summary>
+            Gets a flag indicating whether or not null optional parameters are transformed.
+            </summary>
+        </member>
         <member name="T:AddMember">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:AddMember.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:AddMember.ResourceManager">
             <summary>
@@ -8607,6 +9899,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:AddTypeStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:AddTypeStrings.ResourceManager">
             <summary>
@@ -8731,10 +10026,20 @@
              
             </summary>
         </member>
+        <member name="P:AddTypeStrings.AssemblyTypeNotSupported">
+            <summary>
+              Looks up a localized string similar to 
+               Both the assembly types 'ConsoleApplication' and 'WindowsApplication' are not currently supported.
+             
+            </summary>
+        </member>
         <member name="T:AliasCommandStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:AliasCommandStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:AliasCommandStrings.ResourceManager">
             <summary>
@@ -8885,6 +10190,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ConvertFromStringData.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ConvertFromStringData.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -8915,6 +10223,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ConvertHTMLStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ConvertHTMLStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -8937,6 +10248,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:ConvertMarkdownStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:ConvertMarkdownStrings.ResourceManager">
             <summary>
@@ -8989,6 +10303,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:CsvCommandStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:CsvCommandStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -9013,6 +10330,13 @@
                 
               
              </summary>
+        </member>
+        <member name="P:CsvCommandStrings.CannotSpecifyQuoteFieldsAndUseQuotes">
+            <summary>
+              Looks up a localized string similar to 
+               You must specify either the -UseQuotes or -QuoteFields parameters, but not both.
+             
+            </summary>
         </member>
         <member name="P:CsvCommandStrings.CannotSpecifyIncludeTypeInformationAndNoTypeInformation">
             <summary>
@@ -9081,6 +10405,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:Debugger.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:Debugger.ResourceManager">
             <summary>
@@ -9226,10 +10553,20 @@
              
             </summary>
         </member>
+        <member name="P:Debugger.RunspaceInstanceIdNotFound">
+            <summary>
+              Looks up a localized string similar to 
+               A breakpoint associated with another runspace cannot be updated because there is no runspace with instance ID '{0}'.
+             
+            </summary>
+        </member>
         <member name="T:EventingStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:EventingStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:EventingStrings.ResourceManager">
             <summary>
@@ -9305,10 +10642,97 @@
              
             </summary>
         </member>
+        <member name="T:FormatAndOut_out_gridview">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:FormatAndOut_out_gridview.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.DataNotQualifiedForGridView">
+            <summary>
+              Looks up a localized string similar to 
+               The data format is not supported by Out-GridView.
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.RestartPowerShell">
+            <summary>
+              Looks up a localized string similar to 
+               Microsoft .NET Framework 4.5 was installed while one or more PowerShell sessions were running. To use the {0} cmdlet, close all PowerShell windows, and then open a new PowerShell window.
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.TypeColumnName">
+            <summary>
+              Looks up a localized string similar to 
+               Type
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.ValueColumnName">
+            <summary>
+              Looks up a localized string similar to 
+               Value
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.IndexColumnName">
+            <summary>
+              Looks up a localized string similar to 
+               Index
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.CommandNotFound">
+            <summary>
+              Looks up a localized string similar to 
+               A command named '{0}' was not found.
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.MoreThanOneCommand">
+            <summary>
+              Looks up a localized string similar to 
+               More than one command named '{0}' was found. Start '{1}' with no parameters, and then type '{0}' to filter the results.
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.CannotWriteToConsoleInputBuffer">
+            <summary>
+              Looks up a localized string similar to 
+               Cannot write to console input buffer.
+             
+            </summary>
+        </member>
+        <member name="P:FormatAndOut_out_gridview.PropertyValidate">
+             <summary>
+               Looks up a localized string similar to 
+                {0} should be smaller than {1}.
+                {0} is the property "Height"
+            {1} is the maximum allowed value for the height property.
+              
+             </summary>
+        </member>
         <member name="T:GetMember">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:GetMember.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:GetMember.ResourceManager">
             <summary>
@@ -9332,6 +10756,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:GetRandomCommandStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:GetRandomCommandStrings.ResourceManager">
             <summary>
@@ -9370,6 +10797,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:GetUptimeStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:GetUptimeStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -9392,6 +10822,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:HostStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:HostStrings.ResourceManager">
             <summary>
@@ -9423,6 +10856,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:HttpCommandStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:HttpCommandStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -9452,6 +10888,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:ImplicitRemotingStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:ImplicitRemotingStrings.ResourceManager">
             <summary>
@@ -9728,6 +11167,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ImportLocalizedDataStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ImportLocalizedDataStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -9802,6 +11244,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:MatchStringStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:MatchStringStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -9841,10 +11286,20 @@
              
             </summary>
         </member>
+        <member name="P:MatchStringStrings.CannotSpecifyCultureWithoutSimpleMatch">
+            <summary>
+              Looks up a localized string similar to 
+               You must specify -Culture parameter only with -SimpleMatch parameter.
+             
+            </summary>
+        </member>
         <member name="T:MeasureObjectStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:MeasureObjectStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:MeasureObjectStrings.ResourceManager">
             <summary>
@@ -9882,6 +11337,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:NewObjectStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:NewObjectStrings.ResourceManager">
             <summary>
@@ -9960,7 +11418,34 @@
         <member name="P:NewObjectStrings.ApartmentNotSupported">
             <summary>
               Looks up a localized string similar to 
-               {0} Please note that Single-Threaded Apartment is not supported in PowerShell Core.
+               {0} Please note that Single-Threaded Apartment is not supported in PowerShell.
+             
+            </summary>
+        </member>
+        <member name="T:OutPrinterDisplayStrings">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:OutPrinterDisplayStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:OutPrinterDisplayStrings.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:OutPrinterDisplayStrings.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:OutPrinterDisplayStrings.DefaultPrintFontName">
+            <summary>
+              Looks up a localized string similar to 
+               Courier New
+               {StringCategory="Font Name"}
              
             </summary>
         </member>
@@ -9968,6 +11453,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:SelectObjectStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:SelectObjectStrings.ResourceManager">
             <summary>
@@ -10020,6 +11508,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:SendMailMessageStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:SendMailMessageStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10043,6 +11534,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:SortObjectStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:SortObjectStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10065,6 +11559,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:TestJsonCmdletStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:TestJsonCmdletStrings.ResourceManager">
             <summary>
@@ -10098,10 +11595,20 @@
              
             </summary>
         </member>
+        <member name="P:TestJsonCmdletStrings.JsonSchemaFileOpenFailure">
+            <summary>
+              Looks up a localized string similar to 
+               Can not open JSON schema file: {0}
+             
+            </summary>
+        </member>
         <member name="T:TraceCommandStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:TraceCommandStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:TraceCommandStrings.ResourceManager">
             <summary>
@@ -10135,10 +11642,46 @@
              
             </summary>
         </member>
+        <member name="T:UnblockFileStrings">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:UnblockFileStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:UnblockFileStrings.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:UnblockFileStrings.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:UnblockFileStrings.LinuxNotSupported">
+            <summary>
+              Looks up a localized string similar to 
+               The cmdlet does not support Linux.
+             
+            </summary>
+        </member>
+        <member name="P:UnblockFileStrings.UnblockError">
+            <summary>
+              Looks up a localized string similar to 
+               There was an error unblocking {0}.
+             
+            </summary>
+        </member>
         <member name="T:UpdateDataStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:UpdateDataStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:UpdateDataStrings.ResourceManager">
             <summary>
@@ -10312,10 +11855,53 @@
              
             </summary>
         </member>
+        <member name="T:UpdateListStrings">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:UpdateListStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:UpdateListStrings.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:UpdateListStrings.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:UpdateListStrings.MemberDoesntExist">
+            <summary>
+              Looks up a localized string similar to 
+               The property '{0}' cannot be found on this object
+             
+            </summary>
+        </member>
+        <member name="P:UpdateListStrings.MissingPropertyParameter">
+            <summary>
+              Looks up a localized string similar to 
+               You must specify the Property parameter when the InputObject parameter is specified.
+             
+            </summary>
+        </member>
+        <member name="P:UpdateListStrings.MissingInputObjectParameter">
+            <summary>
+              Looks up a localized string similar to 
+               You must specify the InputObject parameter when the Property parameter is specified.
+             
+            </summary>
+        </member>
         <member name="T:UtilityCommonStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:UtilityCommonStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:UtilityCommonStrings.ResourceManager">
             <summary>
@@ -10466,6 +12052,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:VariableCommandStrings.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:VariableCommandStrings.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10551,6 +12140,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:WebCmdletStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:WebCmdletStrings.ResourceManager">
             <summary>
@@ -10899,10 +12491,20 @@
              
             </summary>
         </member>
+        <member name="P:WebCmdletStrings.JsonMaxDepthReached">
+            <summary>
+              Looks up a localized string similar to 
+               Resulting JSON is truncated as serialization has exceeded the set depth of {0}.
+             
+            </summary>
+        </member>
         <member name="T:WriteErrorStrings">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:WriteErrorStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:WriteErrorStrings.ResourceManager">
             <summary>
@@ -10926,6 +12528,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:WriteProgressResourceStrings.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:WriteProgressResourceStrings.ResourceManager">
             <summary>

@@ -13,7 +13,9 @@ data LocalizedData
     OutpathConflict = (ERROR) Cannot create directory '{0}'. A file exists with the same name.
     InvalidConfigPath = (ERROR) Invalid configuration path '{0}' specified.
     InvalidOutpath = (ERROR) Invalid OutPath '{0}' specified.
-    InvalidConfigurationName = Invalid Configuration Name '{0}' is specified. Standard names may only contain letters (a-z, A-Z), numbers (0-9), and underscore (_). The name may not be null or empty, and should start with a letter.   
+    InvalidConfigurationName = Invalid Configuration Name '{0}' is specified. Standard names may only contain letters (a-z, A-Z), numbers (0-9), and underscore (_). The name may not be null or empty, and should start with a letter.
+    InvalidResourceSpecification = Found more than one resource named '{0}'. Please use the module specification to be more specific.
+    UnsupportedResourceImplementation = The resource '{0}' implemented as '{1}' is not supported by Invoke-DscResource.
     NoValidConfigFileFound = No valid config files (mof,zip) were found.
     InputFileNotExist=File {0} doesn't exist.
     FileReadError=Error Reading file {0}.
@@ -63,12 +65,19 @@ data LocalizedData
     NoModulesPresent=There are no modules present in the system with the given module specification.
     ImportDscResourceWarningForInbuiltResource=The configuration '{0}' is loading one or more built-in resources without explicitly importing associated modules. Add Import-DscResource -ModuleName 'PSDesiredStateConfiguration' to your configuration to avoid this message.
     PasswordTooLong=An error occurred during encryption of a password in node '{0}'. Most likely the password entered is too long to be encrypted using the selected certificate.  Please either use a shorter password or select a certificate with a larger key.
+    PsDscRunAsCredentialNotSupport=The 'PsDscRunAsCredential' property is not currently support when using Invoke-DscResource.
+    EmbeddedResourcesNotSupported=Embedded resources are not support on Linux or macOS.  Please see https://aka.ms/PSCoreDSC for more details.
 '@
 }
 Set-StrictMode -Off
 
-# In case localized resource is not available we revert back to English as defined in LocalizedData section so ignore the error instead of showing it to user. 
+# In case localized resource is not available we revert back to English as defined in LocalizedData section so ignore the error instead of showing it to user.
 Import-LocalizedData  -BindingVariable LocalizedData -FileName PSDesiredStateConfiguration.Resource.psd1 -ErrorAction SilentlyContinue
+
+Import-Module $PSScriptRoot/helpers/DscResourceInfo.psm1
+
+# Set DSC HOME environment variable.
+$env:DSC_HOME = "$PSScriptRoot/Configuration"
 
 $script:V1MetaConfigPropertyList = @('ConfigurationModeFrequencyMins', 'RebootNodeIfNeeded', 'ConfigurationMode', 'ActionAfterReboot', 'RefreshMode', 'CertificateID', 'ConfigurationID', 'DownloadManagerName', 'DownloadManagerCustomData', 'RefreshFrequencyMins', 'AllowModuleOverwrite', 'DebugMode', 'Credential')
 $script:DirectAccessMetaConfigPropertyList = @('AllowModuleOverWrite', 'CertificateID', 'ConfigurationDownloadManagers', 'ResourceModuleManagers', 'DebugMode', 'RebootNodeIfNeeded', 'RefreshMode', 'ConfigurationAgent')
@@ -79,14 +88,15 @@ $script:DirectAccessMetaConfigPropertyList = @('AllowModuleOverWrite', 'Certific
 #################################################################
 function Generate-VersionInfo
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseApprovedVerbs", "", Scope="Function", Target="*")]
     param(
         [Parameter(Mandatory)]
-        $KeywordData, 
+        $KeywordData,
         [Parameter(Mandatory)]
         [Hashtable]
         $Value
     )
-    
+
     $SystemProperties = @('ResourceID', 'SourceInfo', 'ModuleName', 'ModuleVersion')
     $HasAdditionalProperty = $false
     foreach ($key in $KeywordData.Keys)
@@ -101,12 +111,12 @@ function Generate-VersionInfo
     if($HasAdditionalProperty)
     {
         Set-PSMetaConfigVersionInfoV2
-    } 
+    }
     else
     {
-		$script:PSMetaConfigDocumentInstVersionInfo['MinimumCompatibleVersion'] = ($script:PSMetaConfigDocumentInstVersionInfo['MinimumCompatibleVersion'], "1.0.0" | Measure-Object -Maximum).Maximum
+        $script:PSMetaConfigDocumentInstVersionInfo['MinimumCompatibleVersion'] = ($script:PSMetaConfigDocumentInstVersionInfo['MinimumCompatibleVersion'], "1.0.0" | Measure-Object -Maximum).Maximum
     }
-    
+
     $script:PSMetaConfigDocumentInstVersionInfo['CompatibleVersionAdditionalProperties'] = @('MSFT_DSCMetaConfiguration:StatusRetentionTimeInDays')
     $script:PSMetaConfigurationProcessed = $true
 }
@@ -114,6 +124,8 @@ function Generate-VersionInfo
 # indicate whether meta configuration is processed before document instance
 function Set-PSMetaConfigDocInsProcessedBeforeMeta
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
+    param()
     $Script:PSMetaConfigDocInsProcessedBeforeMeta = $true
 }
 
@@ -129,12 +141,14 @@ function Get-PSMetaConfigDocumentInstVersionInfo
 
 function Set-PSMetaConfigVersionInfoV2
 {
-    $script:PSMetaConfigDocumentInstVersionInfo['MinimumCompatibleVersion'] = '2.0.0'    
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
+    param()
+    $script:PSMetaConfigDocumentInstVersionInfo['MinimumCompatibleVersion'] = '2.0.0'
     if($Script:PSMetaConfigDocInsProcessedBeforeMeta) #fixup configuration document instance version info
     {
         [string]$data = Get-MofInstanceText '$OMI_ConfigurationDocument1ref'
         $Script:NoNameNodeInstanceAliases['$OMI_ConfigurationDocument1ref'] = $data -replace 'MinimumCompatibleVersion = "1.0.0"', 'MinimumCompatibleVersion = "2.0.0"'
-        Set-PSDefaultConfigurationDocument $Script:NoNameNodeInstanceAliases['$OMI_ConfigurationDocument1ref'] 
+        Set-PSDefaultConfigurationDocument $Script:NoNameNodeInstanceAliases['$OMI_ConfigurationDocument1ref']
     }
 }
 
@@ -146,11 +160,11 @@ function Get-CompatibleVersionAddtionaPropertiesStr
         $len = @($script:PSMetaConfigDocumentInstVersionInfo['CompatibleVersionAdditionalProperties']).Length
         foreach ($e in @($script:PSMetaConfigDocumentInstVersionInfo['CompatibleVersionAdditionalProperties']))
         {
-                "`"$e`"" + $(if (--$len -gt 0) 
+                "`"$e`"" + $(if (--$len -gt 0)
                 {
                     ', '
                 }
-                else 
+                else
                 {
                     ''
                 }
@@ -196,7 +210,7 @@ function ConvertTo-MOFInstance
 
     # and the CIM type name to use since the keyword might be an alias.
     $ResourceName = [System.Management.Automation.Language.DynamicKeyword]::GetKeyword($Type).ResourceName
-    
+
     if($script:IsMetaConfig -and ($ResourceName -eq 'MSFT_DSCMetaConfigurationV2'))
     {
         Generate-VersionInfo $PropertyTypes $Properties
@@ -210,17 +224,17 @@ function ConvertTo-MOFInstance
     function ConvertTo-MofDateTimeString ([datetime] $d)
     {
         $utcOffset = ($d -$d.ToUniversalTime()).TotalMinutes
-        $utcOffsetString = if ($utcOffset -ge 0) 
+        $utcOffsetString = if ($utcOffset -ge 0)
         {
             '+'
         }
-        else 
+        else
         {
             '-'
         }
         $utcOffsetString += ([System.Math]::Abs(($utcOffset)).ToString().PadLeft(3,'0'))
         '{0}{1}' -f
-        $d.ToString('yyyyMMddHHmmss.ffffff'), 
+        $d.ToString('yyyyMMddHHmmss.ffffff'),
         $utcOffsetString
     }
 
@@ -261,11 +275,11 @@ function ConvertTo-MOFInstance
                     $isDomainUser = $false
                 }
                 return $isDomainUser
-            } 
+            }
         }
         $true
     }
-        
+
     #
     # Utility routine to render a property
     # as a string in MOF syntax.
@@ -279,11 +293,11 @@ function ConvertTo-MOFInstance
             foreach ($e in $Value)
             {
                 '    ' + (stringify $e -targetType $targetType) +
-                $(if (--$len -gt 0) 
+                $(if (--$len -gt 0)
                     {
                         ','
                     }
-                    else 
+                    else
                     {
                         ''
                     }
@@ -324,7 +338,7 @@ function ConvertTo-MOFInstance
             # get the $using: variable asts into an array
             $variables = $scriptAst.FindAll({
                     param ($ast)
-                    $ast.GetType().FullName -match 'VariableExpressionAst' -and 
+                    $ast.GetType().FullName -match 'VariableExpressionAst' -and
                     $ast.Extent.Text -match '^\$using:'
                 }
             , $true).ToArray()
@@ -359,7 +373,7 @@ function ConvertTo-MOFInstance
                 {
                     $varValue = $var.Value
                     # Skip null values but preserve empty arrays and strings for type propigation
-                    if ($varValue -ne $null)
+                    if ($null -ne $varValue)
                     {
                         # Pass strings quoted; amn explicit type check is needed because -is recognizes too many things as strings
                         if ($varValue -is [string])
@@ -375,10 +389,10 @@ function ConvertTo-MOFInstance
                     }
                 }
             }
-    
+
             # Merge in the actual scriptblock body
             $completeScript += $scriptText
-    
+
             # Quote the string so it's suitable to embed in the MOF file...
             '"' + ($completeScript -replace '\\', '\\' -replace "[`r]*`n", '\n'  -replace '"', '\"') + '"'
         }
@@ -419,7 +433,7 @@ function ConvertTo-MOFInstance
                 $errorMessage = $LocalizedData.CannotConvertStringToBool
                 ThrowError -ExceptionName 'System.ArgumentException' -ExceptionMessage $errorMessage -ExceptionObject $Value -ErrorId 'CannotConvertStringToBool' -ErrorCategory InvalidArgument
             }
-            else 
+            else
             {
                 [bool]$Value
             }
@@ -433,7 +447,7 @@ function ConvertTo-MOFInstance
         {
             '"' + ($Value -replace '\\', '\\' -replace "`r?`n", '\n'  -replace '"', '\"') + '"'
         }
-        elseif ($Value -eq $null)
+        elseif ($null -eq $Value)
         {
             'NULL'
         }
@@ -442,26 +456,26 @@ function ConvertTo-MOFInstance
             # Cast value to string if it is not already a string, this is for covering cases like when a user assign an integer while the
             # CIM property type is string
             '"' + ($Value -replace '\\', '\\' -replace "`r?`n", '\n'  -replace '"', '\"') + '"'
-        }           
+        }
         else
         {
             $Value
         }
-    
+
         $result -join "`n"
     }
-    
+
     Write-Debug -Message "        BEGIN MOF GENERATION FOR $Type"
-    
+
     # Generate the MOF instance alias to use for the current node
     if ( (Get-PSCurrentConfigurationNode) )
     {
-        if($Script:NodeTypeRefCount[ (Get-PSCurrentConfigurationNode) ] -eq $null)
+        if($null -eq $Script:NodeTypeRefCount[ (Get-PSCurrentConfigurationNode) ])
         {
-            $Script:NodeTypeRefCount[ (Get-PSCurrentConfigurationNode) ] = 
-            New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+            $Script:NodeTypeRefCount[ (Get-PSCurrentConfigurationNode) ] =
+            New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
         }
-        
+
         $MofAliasString = '$' + $ResourceName + ++$Script:NodeTypeRefCount[ (Get-PSCurrentConfigurationNode) ][$ResourceName] + 'ref'
         $InstanceAliases = $Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ]
     }
@@ -470,7 +484,7 @@ function ConvertTo-MOFInstance
         $MofAliasString = '$' + $ResourceName + ++$Script:NoNameNodeTypeRefCount[$ResourceName] + 'ref'
         $InstanceAliases = $Script:NoNameNodeInstanceAliases
     }
-    
+
     # Start generating the MOF source text for this instance
     $result = "instance of $ResourceName as $MofAliasString`n{`n"
 
@@ -482,11 +496,11 @@ function ConvertTo-MOFInstance
             $script:ShowImportDscResourceWarning = $true
         }
     }
-        
+
     # generate the property definitions
     $oldOFS = $OFS
     $OFS = ' '
-    $result += try 
+    $result += try
     {
         if ($Properties -and $Properties.Count)
         {
@@ -504,41 +518,41 @@ function ConvertTo-MOFInstance
                 switch -regex ($targetTypeName)
                 {
                     # unsigned integer types
-                    '^sint[0-9]{1,2}' 
+                    '^sint[0-9]{1,2}'
                     {
-                        $targetType = [int64] 
+                        $targetType = [int64]
                         break
                     }
                     # Single 16 bit character (note - this type is deprecated and removed in MOFv3
-                    '^char16' 
+                    '^char16'
                     {
-                        $targetType = [char] 
+                        $targetType = [char]
                         break
                     }
                     # signed integer types
-                    '^uint[0-9]{0,2}' 
+                    '^uint[0-9]{0,2}'
                     {
-                        $targetType = [uint64] 
+                        $targetType = [uint64]
                         break
                     }
                     # reals
-                    '^real32|^real64' 
+                    '^real32|^real64'
                     {
-                        $targetType = [double] 
+                        $targetType = [double]
                         break
                     }
                     # boolean
-                    '^boolean' 
+                    '^boolean'
                     {
                         $targetType = [bool]
                     }
                     # datetime
-                    'datetime' 
+                    'datetime'
                     {
                         $targetType = [datetime]
                     }
                     # everything else render directly as a string...
-                    default 
+                    default
                     {
                         $targetType = [string]
                     }
@@ -553,18 +567,18 @@ function ConvertTo-MOFInstance
                     # For MSFT_Credential we'll have a password that may need to be encrypted depending
                     # on the availability of a key. This may need to change to the base class of MSFT_WindowCredential
                     # if we're using the class to refer to non-Windows machines where a Domain may be irrelevant.
-                    
+
                     $p.Name + ' = ' + (stringify -value (Get-EncryptedPassword $p.Value) -asArray $asArray -targetType  $targetType ) + ";`n"
                 }
                 else
                 {
                     #embeded instances cannot be null
-                    if($p.Value -eq $null -and $PropertyTypes[$p.Name].TypeConstraint -eq 'Instance')
+                    if($null -eq $p.Value -and $PropertyTypes[$p.Name].TypeConstraint -eq 'Instance')
                     {
                         $errorMessage = $LocalizedData.ConvertValueToPropertyFailed -f @('$null', $Type, $p.Name, $ResourceName)
                         $errorMessage += Get-PositionInfo $Properties['SourceInfo']
                         $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
-                        Write-Error -Exception $exception -Message $errorMessage  -Category InvalidArgument -ErrorId FailToProcessProperty 
+                        Write-Error -Exception $exception -Message $errorMessage  -Category InvalidArgument -ErrorId FailToProcessProperty
                         Update-ConfigurationErrorCount
                     }
                     if($p.Value -is [PSCredential])
@@ -572,12 +586,12 @@ function ConvertTo-MOFInstance
                         [bool] $PSDscAllowPlainTextPassword = $false
                         [bool] $PSDscAllowDomainUser = $false
                         [bool] $PSDscDomainUser = IsDomainUser -username $p.Value.UserName
-                        
+
 
                         if($Node -and $selectedNodesData)
                         {
                             if($selectedNodesData -is [array])
-                            { 
+                            {
                                 foreach($target in $selectedNodesData)
                                 {
                                     if($target['NodeName'] -and $target['NodeName'] -eq $Node)
@@ -591,7 +605,7 @@ function ConvertTo-MOFInstance
                                 $currentNode = $selectedNodesData
                             }
                         }
-                        # where user need to specify properties for resources not in a node, 
+                        # where user need to specify properties for resources not in a node,
                         # they can do it through localhost nodeName in $allNodes
                         elseif($allnodes -and $allnodes.AllNodes)
                         {
@@ -603,10 +617,10 @@ function ConvertTo-MOFInstance
                                 }
                             }
                         }
-                        
+
                         if($currentNode)
                         {
-                            # PSDscAllowDomainUser set to true would indicate that we want to allow 
+                            # PSDscAllowDomainUser set to true would indicate that we want to allow
                             # domain credential. It takes precedence over PSDscAllowPlainTextPassword behavior
                             if($currentNode['PSDscAllowDomainUser'])
                             {
@@ -614,9 +628,9 @@ function ConvertTo-MOFInstance
                             }
                             if($PSDscDomainUser -and (-not $PSDscAllowDomainUser))
                             {
-                                if($Script:NodeUsingDomainCred -eq $null)
+                                if($null -eq $Script:NodeUsingDomainCred)
                                 {
-                                    $Script:NodeUsingDomainCred = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,bool]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)  
+                                    $Script:NodeUsingDomainCred = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,bool]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
                                 }
                                 $Script:NodeUsingDomainCred[$currentNode['NodeName']] = $true
                             }
@@ -628,12 +642,12 @@ function ConvertTo-MOFInstance
                             {
                                 $PSDscAllowPlainTextPassword = $currentNode['PSDscAllowPlainTextPassword']
                             }
-                            
+
                             $certificateid = $currentNode['CertificateID']
-    
+
                             if ( -not $certificateid)
                             {
-                                # CertificateFile is the public key file 
+                                # CertificateFile is the public key file
                                 $certificatefile = $currentNode['CertificateFile']
 
                                 if (( -not $certificatefile) -and (-not $PSDscAllowPlainTextPassword))
@@ -646,7 +660,7 @@ function ConvertTo-MOFInstance
                             if($currentNode['NodeName'] -and ($certificatefile -or $certificateid))
                             {
                                 $Script:NodesPasswordEncrypted[$currentNode['NodeName']] = $true
-                            }    
+                            }
 
                             $p.Name + ' = ' + (stringify -value $p.Value -asArray $asArray -targetType  $targetType ) + ";`n"
                         }
@@ -707,7 +721,7 @@ function ConvertTo-MOFInstance
         {
             $result += " GenerationHost = `"$([system.environment]::MachineName)`";`n"
         }
-    
+
         # todo: report error is configuration name does't match
         if (-not $Properties.ContainsKey('Name'))
         {
@@ -719,22 +733,22 @@ function ConvertTo-MOFInstance
     # Append the completed mof instance text to the overall document
     #
     $instanceText = "`n" + $result + "`n};`n"
-    
+
     #
     # Record and return the alias for that document
     #
     Write-Debug -Message "          Added alias $MofAliasString to InstanceAliases array for node '$(Get-PSCurrentConfigurationNode)'"
-    
+
     if ( Get-PSCurrentConfigurationNode )
-    {    
-        if($Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ] -eq $null)
+    {
+        if($null -eq $Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ])
         {
-            $Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-            $Script:NodeResourceIdAliases[ (Get-PSCurrentConfigurationNode) ] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+            $Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+            $Script:NodeResourceIdAliases[ (Get-PSCurrentConfigurationNode) ] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
         }
-        
+
         $Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ][$MofAliasString] = $instanceText
-        
+
         if($Properties.ContainsKey('ResourceID'))
         {
             $Script:NodeResourceIdAliases[ (Get-PSCurrentConfigurationNode) ][$Properties['ResourceID']] = $MofAliasString
@@ -743,14 +757,14 @@ function ConvertTo-MOFInstance
     else
     {
         $Script:NoNameNodeInstanceAliases[$MofAliasString] = $instanceText
-        
+
         if($Properties.ContainsKey('ResourceID'))
         {
             $Script:NoNameNodeResourceIdAliases[$Properties['ResourceID']] = $MofAliasString
-        }        
+        }
     }
-    
-    # todo: we can check error for duplicated alias in a node and report it here 
+
+    # todo: we can check error for duplicated alias in a node and report it here
     # because this can live acrose configurationelement calls
     Write-Debug -Message "        MOF GENERATION COMPLETED FOR $Type"
     $MofAliasString
@@ -768,7 +782,7 @@ function Get-MofInstanceText
         [string]
         $aliasId
     )
-    
+
     if ( Get-PSCurrentConfigurationNode )
     {
         $Script:NodeInstanceAliases[ (Get-PSCurrentConfigurationNode) ][$aliasId]
@@ -809,7 +823,7 @@ function Get-PositionInfo
         $positionMessage += "`n+   $($infoItems[3])"
     }
 
-    $positionMessage    
+    $positionMessage
 }
 
 
@@ -821,6 +835,7 @@ function Get-PositionInfo
 #
 function Node
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "", Scope="Function", Target="*")]
     [OutputType([void])]
     param (
         [Parameter(Mandatory)]
@@ -833,21 +848,21 @@ function Node
         [Parameter(Mandatory)]
         $sourceMetadata     # Not used in this function
     )
-    
+
 
     if (-not $Name)
     {
         Write-Debug -Message 'The name parameter was empty, no nodes generated'
         return
     }
-    
+
     Write-Debug -Message "*PROCESSING STARTED FOR NODE SET {$(@($Name) -join ',')} "
-    
+
     # Save any global level resources and initialize for the resources defined for this node.
     $Script:PSOuterConfigurationNodes.Push( (Get-PSCurrentConfigurationNode) )
     $OldNodeResources = $Script:NodeResources
     $OldNodeKeys = $Script:NodeKeys
-        
+
     try
     {
         $OuterNode = $Script:PSOuterConfigurationNodes.Peek()
@@ -873,7 +888,7 @@ function Node
             #
             # Create the SelectedNodes list for this Node statement
             #
-            $selectedNodesData = foreach ($nn in $Name) 
+            $selectedNodesData = foreach ($nn in $Name)
             {
                 # If there is no data for this node, create a dummy node
                 # with at least the node name
@@ -883,7 +898,7 @@ function Node
                         NodeName = $nn
                     }
                 }
-                $nodeDataMap[$nn] 
+                $nodeDataMap[$nn]
             }
 
             foreach ($Node in $Name)
@@ -892,7 +907,7 @@ function Node
                 {
                     continue
                 }
-    
+
                 Set-PSCurrentConfigurationNode $Node
 
                 if( $Script:NodesInThisConfiguration[$Node] )
@@ -901,8 +916,8 @@ function Node
                 }
                 else
                 {
-                    $Script:NodesInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-                    $Script:NodeResources = $Script:NodesInThisConfiguration[$Node]  
+                    $Script:NodesInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+                    $Script:NodeResources = $Script:NodesInThisConfiguration[$Node]
                 }
 
                 #this for tracking referenced configuration managers
@@ -912,8 +927,8 @@ function Node
                 }
                 else
                 {
-                    $Script:NodesManagerInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-                    $Script:NodeManager = $Script:NodesManagerInThisConfiguration[$Node]  
+                    $Script:NodesManagerInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+                    $Script:NodeManager = $Script:NodesManagerInThisConfiguration[$Node]
                 }
 
                 #this for tracking exclusive resources
@@ -923,8 +938,8 @@ function Node
                 }
                 else
                 {
-                    $Script:NodesExclusiveResourcesInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-                    $Script:NodeExclusiveResources = $Script:NodesExclusiveResourcesInThisConfiguration[$Node]  
+                    $Script:NodesExclusiveResourcesInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+                    $Script:NodeExclusiveResources = $Script:NodesExclusiveResourcesInThisConfiguration[$Node]
                 }
 
                 #this for tracking referenced Resource Module Source
@@ -934,15 +949,15 @@ function Node
                 }
                 else
                 {
-                    $Script:NodesResourceSourceInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-                    $Script:NodeResourceSource = $Script:NodesResourceSourceInThisConfiguration[$Node]  
+                    $Script:NodesResourceSourceInThisConfiguration[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+                    $Script:NodeResourceSource = $Script:NodesResourceSourceInThisConfiguration[$Node]
                 }
 
                 if(-not $Script:NodeTypeRefCount[$Node])
                 {
-                    $Script:NodeTypeRefCount[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-                    $Script:NodeInstanceAliases[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-                    $Script:NodeResourceIdAliases[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+                    $Script:NodeTypeRefCount[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+                    $Script:NodeInstanceAliases[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+                    $Script:NodeResourceIdAliases[$Node] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
                 if(-not $script:NodesKeysInThisConfiguration[$Node])
@@ -961,14 +976,14 @@ function Node
                 )
 
                 # Initialize dictionary to detect duplicate resources
-                if ($Script:DuplicateResources -eq $null)
+                if ($null -eq $Script:DuplicateResources)
                 {
-                    $Script:DuplicateResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+                    $Script:DuplicateResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
                 }
-                
+
                 if (-not $Script:DuplicateResources.ContainsKey($Name))
                 {
-                    $Script:DuplicateResources[$Name] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+                    $Script:DuplicateResources[$Name] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
                 try
@@ -989,7 +1004,7 @@ function Node
                 {
                     $nameMessage = $LocalizedData.DomainCredentialNotAllowed -f @($Node, $Node)
                     $UserWarningPreference = $WarningPreference
-                    if($ArgsToBody['WarningAction'] -ne $null)
+                    if($null -ne $ArgsToBody['WarningAction'])
                     {
                         $UserWarningPreference = $ArgsToBody['WarningAction']
                     }
@@ -997,7 +1012,7 @@ function Node
                 }
 
                 # Validate make sure all of the required resources are defined
-                # if so, add the DependsOn fields for all resources 
+                # if so, add the DependsOn fields for all resources
                 ValidateNodeResources
                 #
                 #  Fixup ModuleVersion
@@ -1016,7 +1031,7 @@ function Node
 
                 # Validate make sure all of the required resources are defined
                 ValidateNoCircleInNodeResources
-                
+
                 Write-Debug -Message "*$Node : NODE PROCESSING COMPLETED FOR THIS NODE. configuration errors encountered so far: $(Get-ConfigurationErrorCount)"
             }
         }
@@ -1050,6 +1065,7 @@ function Node
 #
 function Update-ConfigurationErrorCount
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param()
 
@@ -1071,15 +1087,15 @@ function Get-ComplexResourceQualifier
 
    # walk the call stack to get at all of the enclosing configuration resource IDs
     $stackedConfigs = @(Get-PSCallStack |
-        where { ($_.InvocationInfo.MyCommand -ne $null) -and ($_.InvocationInfo.MyCommand.CommandType -eq 'Configuration') })
-    
+        Where-Object -FilterScript { ($null -ne $_.InvocationInfo.MyCommand) -and ($_.InvocationInfo.MyCommand.CommandType -eq 'Configuration') })
+
     $complexResourceQualifier = $null
     # keep all but the top-most
     if(@($stackedConfigs).Length -ge 3)
     {
         $stackedConfigs = $stackedConfigs[1..(@($stackedConfigs).Length - 2)]
         # and build the complex resource ID suffix.
-        $complexResourceQualifier = ( $stackedConfigs | foreach { '[' + $_.Command + ']' + $_.InvocationInfo.BoundParameters['InstanceName'] } ) -join '::'
+        $complexResourceQualifier = ( $stackedConfigs | foreach-Object -Process { '[' + $_.Command + ']' + $_.InvocationInfo.BoundParameters['InstanceName'] } ) -join '::'
     }
 
     return $complexResourceQualifier
@@ -1090,6 +1106,7 @@ function Get-ComplexResourceQualifier
 #
 function Set-PSDefaultConfigurationDocument
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [Parameter()]
@@ -1125,6 +1142,7 @@ function Get-PSTopConfigurationName
 
 function Set-PSTopConfigurationName
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [Parameter()]
@@ -1149,6 +1167,7 @@ function Get-PSCurrentConfigurationNode
 
 function Set-PSCurrentConfigurationNode
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [Parameter()]
@@ -1163,6 +1182,7 @@ function Set-PSCurrentConfigurationNode
 
 function Set-NodeResources
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [Parameter(Mandatory)]
@@ -1175,7 +1195,7 @@ function Set-NodeResources
         $requiredResourceList
     )
 
-    if ($Script:NodeResources -eq $null)
+    if ($null -eq $Script:NodeResources)
     {
         $Script:NodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     }
@@ -1207,6 +1227,7 @@ function Test-NodeResources
 #
 function Set-NodeManager
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [Parameter(Mandatory)]
@@ -1218,7 +1239,7 @@ function Set-NodeManager
         $referencedManagers
     )
 
-    if ($Script:NodeManager -eq $null)
+    if ($null -eq $Script:NodeManager)
     {
         $Script:NodeManager = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     }
@@ -1226,7 +1247,7 @@ function Set-NodeManager
 }
 
 #
-# 
+#
 #
 function Test-NodeManager
 {
@@ -1253,6 +1274,7 @@ function Test-NodeManager
 #
 function Set-NodeResourceSource
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [Parameter(Mandatory)]
@@ -1264,7 +1286,7 @@ function Set-NodeResourceSource
         $referencedResourceSources
     )
 
-    if ($Script:NodeResourceSource -eq $null)
+    if ($null -eq $Script:NodeResourceSource)
     {
         $Script:NodeResourceSource = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     }
@@ -1272,7 +1294,7 @@ function Set-NodeResourceSource
 }
 
 #
-# 
+#
 #
 function Test-NodeResourceSource
 {
@@ -1296,11 +1318,12 @@ function Test-NodeResourceSource
 
 #
 # update a mapping of a partial configuration resource and the managers it referenced
-# resource format can be moduleName\* moduleName\resourceName and resourceName 
+# resource format can be moduleName\* moduleName\resourceName and resourceName
 # this is validated during mof generation/cananic stage
 #
 function Set-NodeExclusiveResources
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([string[]])]
     param (
         [Parameter(Mandatory)]
@@ -1328,8 +1351,8 @@ function Add-NodeKeys
         [string]
         $keywordName
     )
-    
-    if ($Script:NodeKeys -eq $null)
+
+    if ($null -eq $Script:NodeKeys)
     {
         $Script:NodeKeys = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.HashSet[string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     }
@@ -1343,17 +1366,17 @@ function Add-NodeKeys
     {
         $null = $Script:NodeKeys[$keywordName].Add($ResourceKey)
     }
-    
+
 }
 
 ###########################################################
 #
 # A function to verify there's no duplicate conflicting resources in the configuration
 #
-# Conflict detecting algorithm works by going through all previuosly visited resources of same type and checking whether previously visited 
+# Conflict detecting algorithm works by going through all previuosly visited resources of same type and checking whether previously visited
 # resource contains any properties which currently analyzed resource does not have or whether
 # they have same properties but with different values. If that's the case, we mark that either key or non-key properties don't match.
-# After that we check whether currently analyzed resource contains properties which the previously analyzed resource did not have at all. If that's the case we mark that 
+# After that we check whether currently analyzed resource contains properties which the previously analyzed resource did not have at all. If that's the case we mark that
 # non-key properties don't match (since all key properties were covered in the first phase).
 #
 # Once we processed all previous resources, we return error about duplicate conflicting resources if and only if key properties match and non key properties don't match.
@@ -1361,6 +1384,7 @@ function Add-NodeKeys
 ###########################################################
 function Test-ConflictingResources
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param (
         [string]
@@ -1388,14 +1412,14 @@ function Test-ConflictingResources
     }
 
     # Initialize $Script:DuplicateResources if not already initialized
-    if ($Script:DuplicateResources -eq $null)
+    if ($null -eq $Script:DuplicateResources)
     {
-        $Script:DuplicateResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+        $Script:DuplicateResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     }
-                
+
     if (-not $Script:DuplicateResources.ContainsKey($currentNodeName))
     {
-        $Script:DuplicateResources[$currentNodeName] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+        $Script:DuplicateResources[$currentNodeName] = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     }
 
     if ( -not $Script:DuplicateResources[$currentNodeName].ContainsKey($keyword))
@@ -1404,7 +1428,7 @@ function Test-ConflictingResources
     }
 
     # Find if current resource is duplicate and conflicting.
-    foreach($resource in $Script:DuplicateResources[$currentNodeName][$keyword]) 
+    foreach($resource in $Script:DuplicateResources[$currentNodeName][$keyword])
     {
         $keyPropertiesMatch = $true
         $nonKeyPropertiesMatch = $true
@@ -1420,7 +1444,7 @@ function Test-ConflictingResources
             {
                 continue
             }
-            
+
             # If currently analyzed resource does not have the property
             if ( -not $properties.ContainsKey($property))
             {
@@ -1441,13 +1465,13 @@ function Test-ConflictingResources
             elseif ( $resource[$property] -ne $properties[$property] )
             {
                 # If it's a key property
-                if ($keywordData.Properties[$property].IsKey) 
+                if ($keywordData.Properties[$property].IsKey)
                 {
                     $keyPropertiesMatch = $false
                     break
                 }
                 # If it's a non-key property
-                else 
+                else
                 {
                     $nonKeyPropertiesMatch = $false
                     $unmatchedNonKeyPropertiesNames += $property.ToString() + ';'
@@ -1459,7 +1483,7 @@ function Test-ConflictingResources
                     {
                         $unmatchedNonKeyPropertiesPreviousValues = $unmatchedNonKeyPropertiesPreviousValues.ToString() + 'NULL;'
                     }
-                    
+
                     if ($properties[$property])
                     {
                         $unmatchedNonKeyPropertiesCurrentValues += $properties[$property].ToString() + ';'
@@ -1557,92 +1581,92 @@ function Initialize-ConfigurationRuntimeState
     [string] $Script:PsDscCompatibleVersion = "1.0.0"
 
     # The list of modules explicitly imported using import-dscresorce
-    $Script:ExplicitlyImportedModules = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:ExplicitlyImportedModules = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the current configuration, this contains the name of the node currently being processed
     [string] $Script:PSCurrentConfigurationNode = ''
 
     # For the current node, this contains a map of resource instance to resource prerequisites (DependsOn resources).
     [System.Collections.Generic.Dictionary[string,string[]]] `
-    $Script:NodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the current node, this contains a map of partial configuration instance to configuration managers.
     [System.Collections.Generic.Dictionary[string,string]] `
-    $Script:NodeManager = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodeManager = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the current node, this contains a map of partial configuration instance to Resource Source.
     [System.Collections.Generic.Dictionary[string,string]] `
-    $Script:NodeResourceSource = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodeResourceSource = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the current node, this contains a map of partial configuration instance to its exclusive resources.
     [System.Collections.Generic.Dictionary[string,string[]]] `
-    $Script:NodeExclusiveResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodeExclusiveResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For all nodes except the unnamed node, this contains the per-node per-type reference counter used to generate the CIM aliases for each instance
     [System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]] `
-    $Script:NodeTypeRefCount = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-    
+    $Script:NodeTypeRefCount = New-Object -TypeName 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,int]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+
     # For all nodes except the unnamed node, this maps the node name to the node's table of alias to mof text mappings.
     [System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]] `
-    $Script:NodeInstanceAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-    
+    $Script:NodeInstanceAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+
     # For all nodes except the unnamed node, this maps the node name to the node's table of resourceID to mof text mappings.
     [System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]] `
-    $Script:NodeResourceIdAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodeResourceIdAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
-    # For all nodes except the unnamed node, this maps the node name to the node's map of resource instance to resource prerequisites 
+    # For all nodes except the unnamed node, this maps the node name to the node's map of resource instance to resource prerequisites
     [System.Collections.Generic.Dictionary[string,object]] `
-    $Script:NodesInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-    
+    $Script:NodesInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+
     # For all nodes except the unnamed node, this maps the node name to the node's map of partial configuration resource instance to  reference resource source.
     [System.Collections.Generic.Dictionary[string,object]] `
-    $Script:NodesResourceSourceInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodesResourceSourceInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For all nodes except the unnamed node, this maps the node name to the node's map of partial configuration resource instance to  reference configuraiton manager.
     [System.Collections.Generic.Dictionary[string,object]] `
-    $Script:NodesManagerInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodesManagerInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
-    # For all nodes except the unnamed node, this maps the node name to the node's map of resource instance to exclusive resource 
+    # For all nodes except the unnamed node, this maps the node name to the node's map of resource instance to exclusive resource
     [System.Collections.Generic.Dictionary[string,object]] `
-    $Script:NodesExclusiveResourcesInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodesExclusiveResourcesInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this contains a map of resource instance to resource prerequisites (required resources).
     [System.Collections.Generic.Dictionary[String,String[]]] `
-    $Script:NoNameNodesResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodesResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this contains a map of partial configuration resource instance to  reference configuration manager.
     [System.Collections.Generic.Dictionary[String,String]] `
-    $Script:NoNameNodeManager = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodeManager = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this contains a map of partial configuration resource instance to  reference resource source.
     [System.Collections.Generic.Dictionary[String,String]] `
-    $Script:NoNameNodeResourceSource = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodeResourceSource = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this contains a map of partial configuration resource instance to its exclusive resources.
     [System.Collections.Generic.Dictionary[String,String[]]] `
-    $Script:NoNameNodeExclusiveResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodeExclusiveResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,String[]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this contains the per-node per-type reference counter used to generate the CIM aliases for each instance
     [System.Collections.Generic.Dictionary[String,int]] `
-    $Script:NoNameNodeTypeRefCount = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,int]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodeTypeRefCount = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,int]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this maps the node name to the node's table of alias to mof text mappings.
     # Alias to mof text mapping for the unnamed node.
     [System.Collections.Generic.Dictionary[string,string]] `
-    $Script:NoNameNodeInstanceAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodeInstanceAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this maps the node name to the node's table of resourceId to mof text mappings.
     # Alias to mof text mapping for the unnamed node.
     [System.Collections.Generic.Dictionary[string,string]] `
-    $Script:NoNameNodeResourceIdAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NoNameNodeResourceIdAliases = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     #dictionary to save whether a node has encrypted password
     [System.Collections.Generic.Dictionary[string,bool]] `
-    $Script:NodesPasswordEncrypted = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,bool]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodesPasswordEncrypted = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,bool]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For all nodes, contain information about node using domain credential or not
     [System.Collections.Generic.Dictionary[string,bool]] `
-    $Script:NodeUsingDomainCred = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,bool]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)  
+    $Script:NodeUsingDomainCred = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,bool]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     [System.Collections.Generic.Stack[String]] $Script:PSOuterConfigurationNodes = New-Object -TypeName 'System.Collections.Generic.Stack[String]'
 
@@ -1653,7 +1677,7 @@ function Initialize-ConfigurationRuntimeState
     # which will be used by all nodes if it's present.
     [string]    $Script:PSDefaultConfigurationDocument = ''
 
-    
+
     # Set up a hastable to hold user specified info for OMI_ConfigurationDocument value for meta config
     # we will need update it last after processing meta config to figure out what V2 property it uses
     [hashtable]    $script:PSMetaConfigDocumentInstVersionInfo = @{}
@@ -1661,21 +1685,21 @@ function Initialize-ConfigurationRuntimeState
     [bool] $Script:PSMetaConfigDocInsProcessedBeforeMeta = $false
     [bool] $script:PSMetaConfigurationProcessed = $false
 
-    # For all nodes except the unnamed node, this maps the node name to the node's map of keys of resources. 
+    # For all nodes except the unnamed node, this maps the node name to the node's map of keys of resources.
     [System.Collections.Generic.Dictionary[string,object]] `
-    $script:NodesKeysInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $script:NodesKeysInThisConfiguration = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,object]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the current node, this contains keys of resource instances.
     [System.Collections.Generic.Dictionary[string,System.Collections.Generic.HashSet[string]]] `
-    $Script:NodeKeys = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.HashSet[string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:NodeKeys = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.HashSet[string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # For the unnamed (default) node, this contains keys of resource instances.
     [System.Collections.Generic.Dictionary[String,System.Collections.Generic.HashSet[string]]] `
-    $Script:NoNameNodeKeys = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,System.Collections.Generic.HashSet[string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
-    
+    $Script:NoNameNodeKeys = New-Object -TypeName 'System.Collections.Generic.Dictionary[String,System.Collections.Generic.HashSet[string]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
+
     # For the current configuration, $Script:DuplicateResources["Type"] contains list with properties of all resources of the specific type
     [System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]] `
-    $Script:DuplicateResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $Script:DuplicateResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[System.Collections.Hashtable]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
 
     # Show Import-DscResource warning if in-build resources are used in the Configuration without Import-DscResource statement.
     [bool] $script:ShowImportDscResourceWarning = $false
@@ -1696,6 +1720,7 @@ Initialize-ConfigurationRuntimeState
 # 5. We will copy values from NodeName="*" to all node if they don't exist
 function ValidateUpdate-ConfigurationData
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseApprovedVerbs", "", Scope="Function", Target="*")]
     param (
         [Parameter()]
         [hashtable]
@@ -1720,14 +1745,14 @@ function ValidateUpdate-ConfigurationData
 
     $nodeNames = New-Object -TypeName 'System.Collections.Generic.HashSet[string]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     foreach($Node in $ConfigurationData.AllNodes)
-    { 
+    {
         if($Node -isnot [hashtable] -or -not $Node.NodeName)
-        { 
+        {
             $errorMessage = $LocalizedData.AllNodeNeedToBeHashtable
             $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
             Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId ConfiguratonDataAllNodesNeedHashtable
             return $false
-        } 
+        }
 
         if($nodeNames.Contains($Node.NodeName))
         {
@@ -1736,19 +1761,19 @@ function ValidateUpdate-ConfigurationData
             Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId DuplicatedNodeInConfigurationData
             return $false
         }
-        
+
         if($Node.NodeName -eq '*')
         {
             $AllNodeSettings = $Node
         }
         [void] $nodeNames.Add($Node.NodeName)
     }
-    
+
     if($AllNodeSettings)
     {
         foreach($Node in $ConfigurationData.AllNodes)
         {
-            if($Node.NodeName -ne '*') 
+            if($Node.NodeName -ne '*')
             {
                 foreach($nodeKey in $AllNodeSettings.Keys)
                 {
@@ -1771,7 +1796,7 @@ function ValidateUpdate-ConfigurationData
 
 ##############################################################
 #
-# Checks to see if a module defining composite resources should be reloaded 
+# Checks to see if a module defining composite resources should be reloaded
 # based the last write time of the schema file. Returns true if the file exists
 # and the last modified time was either not recorded or has change.
 #
@@ -1819,7 +1844,7 @@ function Test-ModuleReloadRequired
     $true
 }
 # Holds the schema file to lastwritetime mapping.
-[System.Collections.Generic.Dictionary[string,DateTime]] $script:schemaFileLastUpdate = 
+[System.Collections.Generic.Dictionary[string,DateTime]] $script:schemaFileLastUpdate =
 New-Object -TypeName 'System.Collections.Generic.Dictionary[string,datetime]'
 
 ###########################################################
@@ -1831,6 +1856,10 @@ New-Object -TypeName 'System.Collections.Generic.Dictionary[string,datetime]'
 #
 function Configuration
 {
+    # suppress global:ConfigurationData
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalVars", "", Scope="Function", Target="*")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideCommentHelp", "", Scope="Function", Target="*")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "", Scope="Function", Target="*")]
     [CmdletBinding(HelpUri = 'http://go.microsoft.com/fwlink/?LinkId=517195')]
     param (
         # there are extra [] around Tuple arguments
@@ -1853,16 +1882,17 @@ function Configuration
 
     function ConvertModuleDefnitionToModuleInfo
     {
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "", Scope="Function", Target="*")]
         param(
-            [Microsoft.PowerShell.Commands.ModuleSpecification[]]$moduleToImport, 
+            [Microsoft.PowerShell.Commands.ModuleSpecification[]]$moduleToImport,
             [Version]$moduleVersion = $null
         )
 
         if (-not $moduleToImport) {
             return $null
         }
-        
-        $moduleToImport | % {
+
+        $moduleToImport | Foreach-Object -Process {
             $versionToUse = $_.Version
             if( [string]::IsNullOrEmpty($versionToUse))
             {
@@ -1870,9 +1900,13 @@ function Configuration
             }
             $Script:ExplicitlyImportedModules[ $_.Name ] = $versionToUse
         }
-        $moduleInfos = Get-Module -ListAvailable -FullyQualifiedName $moduleToImport | sort -Property Version -Descending
+        $moduleInfos = Get-Module -ListAvailable -FullyQualifiedName $moduleToImport | Sort-Object -Property Version -Descending
 
         return $moduleInfos
+    }
+
+    if ( $IsMacOS -or $IsLinux ) {
+        Write-Warning -Message $LocalizedData.EmbeddedResourcesNotSupported
     }
 
     try
@@ -1881,11 +1915,11 @@ function Configuration
 
         if ($Name -inotmatch  '^[a-z][a-z0-9_]*$')
         {
-            $errorId = 'InvalidConfigurationName' 
-            $errorMessage = $($LocalizedData.InvalidConfigurationName) -f ${Name} 
-            $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage 
-            Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId $errorId 
-        }       
+            $errorId = 'InvalidConfigurationName'
+            $errorMessage = $($LocalizedData.InvalidConfigurationName) -f ${Name}
+            $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
+            Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId $errorId
+        }
 
         $script:IsMetaConfig = $false
         foreach($attri in $Body.Attributes)
@@ -1913,9 +1947,9 @@ function Configuration
             # This dictionary is passed into the body scriptblock, defining these functions in the body scope
             # which simplifies cleanup.
             #
-            $script:functionsToDefine = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,ScriptBlock]'([System.StringComparer]::OrdinalIgnoreCase) 
+            $script:functionsToDefine = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,ScriptBlock]'([System.StringComparer]::OrdinalIgnoreCase)
 
-            if($ConfigurationData -eq $null)
+            if($null -eq $ConfigurationData)
             {
                 $ConfigurationData = @{
                     AllNodes = @()
@@ -1923,7 +1957,7 @@ function Configuration
             }
 
             $dataValidated = ValidateUpdate-ConfigurationData $ConfigurationData
-            
+
             if (-not $dataValidated)
             {
                 Update-ConfigurationErrorCount
@@ -1935,10 +1969,11 @@ function Configuration
                 $script:ConfigurationData = $ConfigurationData
             }
 
-            if($OutputPath -eq '.' -or $OutputPath -eq $null -or $OutputPath -eq '')
+            if($OutputPath -eq '.' -or $null -eq $OutputPath -or $OutputPath -eq '')
             {
                 $OutputPath = ".\$Name"
             }
+
             # Load the default CIM keyword/function definitions set, populating the function collection
             # with the default functions.
             [Microsoft.PowerShell.DesiredStateConfiguration.Internal.DscClassCache]::LoadDefaultCimKeywords($functionsToDefine)
@@ -1962,10 +1997,10 @@ function Configuration
 
                 if ($mkdirError)
                 {
-                    $errorId = 'InvalidOutputPath' 
+                    $errorId = 'InvalidOutputPath'
                     $errorCategory = [System.Management.Automation.ErrorCategory]::InvalidOperation
-                    $errorMessage = $($LocalizedData.CannotCreateOutputPath) -f ${ConfigurationOutputDirectory} 
-                    $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage 
+                    $errorMessage = $($LocalizedData.CannotCreateOutputPath) -f ${ConfigurationOutputDirectory}
+                    $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
                     $ErrorRecord = New-Object -TypeName System.Management.Automation.ErrorRecord -ArgumentList $exception, $errorId, $errorCategory, $null
                     Write-Error $ErrorRecord
                     foreach ($e in $mkdirError)
@@ -1978,7 +2013,7 @@ function Configuration
 
             #
             # Add the utility functions used by the resource implementation functions.
-            # 
+            #
             $functionsToDefine.Add('Get-MofInstanceText',                ${function:Get-MofInstanceText} )
             $functionsToDefine.Add('ConvertTo-MOFInstance',              ${function:ConvertTo-MOFInstance} )
             $functionsToDefine.Add('Update-ConfigurationErrorCount',     ${function:Update-ConfigurationErrorCount} )
@@ -2013,7 +2048,6 @@ function Configuration
         else
         {
             Write-Debug -Message "  $Name : NESTED CONFIGURATION STARTED"
-            $oldFunctionsToDefine = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,ScriptBlock]'
         }
 
         #
@@ -2032,8 +2066,8 @@ function Configuration
 
             foreach ($mod in $modulesInfo) {
 
-                $resourcesFound = ImportClassResourcesFromModule -Module $mod -Resources $res -functionsToDefine $functionsToDefine
-                $dscResourcesPath = Join-Path -Path $mod.ModuleBase -ChildPath 'DSCResources'
+                $null = ImportClassResourcesFromModule -Module $mod -Resources $res -functionsToDefine $functionsToDefine
+                $dscResourcesPath = Join-Path -Path $mod.ModuleBase -ChildPath 'DscResources'
                 if(Test-Path $dscResourcesPath)
                 {
                     foreach($requiredResource in $res)
@@ -2043,11 +2077,11 @@ function Configuration
                             # We don't support wildcards resolutions for Friendly names.
                             foreach ($resource in Get-ChildItem -Path $dscResourcesPath -Directory -Name -Filter $requiredResource)
                             {
-                                $foundResource = ImportCimAndScriptKeywordsFromModule -Module $mod -Resource $resource -functionsToDefine $functionsToDefine
+                                $null = ImportCimAndScriptKeywordsFromModule -Module $mod -Resource $resource -functionsToDefine $functionsToDefine
                             }
                         } else {
                             # ImportCimAndScriptKeywordsFromModule takes care about resolving $requiredResources names to ClassNames or FriendlyNames.
-                            $foundResource = ImportCimAndScriptKeywordsFromModule -Module $mod -Resource $requiredResource -functionsToDefine $functionsToDefine
+                            $null = ImportCimAndScriptKeywordsFromModule -Module $mod -Resource $requiredResource -functionsToDefine $functionsToDefine
                         }
                     }
                 }
@@ -2055,7 +2089,7 @@ function Configuration
                 {
                     $modules.Add($moduleInfos)
                 }
-            }            
+            }
         }
 
         if (-not (Get-PSCurrentConfigurationNode))
@@ -2064,8 +2098,6 @@ function Configuration
             # defined outside of a node statement
             $Script:NodeResources = $Script:NoNameNodesResources
             $Script:NodeKeys = $Script:NoNameNodeKeys
-            [System.Collections.Generic.Dictionary[string,string[]]] $OldNodeResources = 
-            New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
             $Script:NodeManager = $Script:NoNameNodeManager
             $Script:NodeExclusiveResources = $Script:NoNameNodeExclusiveResources
             $Script:NodeResourceSource = $Script:NoNameNodeResourceSource
@@ -2080,7 +2112,7 @@ function Configuration
         }
 
         #
-        # Evaluate the configuration statement body which will generate the resource definitons 
+        # Evaluate the configuration statement body which will generate the resource definitons
         # for this configuration.
         #
         Write-Debug -Message "  $Name : Evaluating configuration statement body..."
@@ -2100,10 +2132,10 @@ function Configuration
                 }
             )
 
-            $variablesToDefine += foreach ($key in $ArgsToBody.Keys) 
+            $variablesToDefine += foreach ($key in $ArgsToBody.Keys)
             {
                 #
-                # we need to process dependsOn seperately to 
+                # we need to process dependsOn seperately to
                 # 1. combined depends on with possible upper level configuration statement (composite resource case
                 # 2. in case of 1, we also need to fix up the dependson to append the suffix of ::$complexResourceQualifier similar in func:Test-DependsOn in CimDSCParser
                 #
@@ -2135,7 +2167,7 @@ function Configuration
                 $variablesToDefine += New-Object -TypeName PSVariable -ArgumentList('DependsOn', $DependsOn)
             }
 
-            $result = $Body.InvokeWithContext($functionsToDefine, $variablesToDefine)
+            $null = $Body.InvokeWithContext($functionsToDefine, $variablesToDefine)
         }
         catch [System.Management.Automation.MethodInvocationException]
         {
@@ -2148,7 +2180,7 @@ function Configuration
         #
         # write the generated files to disk and return the resulting files to stdout.
         #
-       
+
         if( $topLevel )
         {
             if($Script:NoNameNodeInstanceAliases.Count -gt 0)
@@ -2208,8 +2240,8 @@ function Configuration
                     #
                     Write-NodeMOFFile $Name 'localhost' $Script:NoNameNodeInstanceAliases
                 }
-                
-                # If no script-level $ConfigurationData variable is set, this code 
+
+                # If no script-level $ConfigurationData variable is set, this code
                 # tries to get it first, from a global PowerShell ConfigurationData variable,
                 # then if that doesn't work it trys the environment
                 # variable $ENV:ConfigurationData when is expected to contain a JSON string
@@ -2217,7 +2249,7 @@ function Configuration
                 #
                 if (-not $script:ConfigurationData)
                 {
-                    $script:ConfigurationData = try 
+                    $script:ConfigurationData = try
                     {
                         if ($global:ConfigurationData)
                         {
@@ -2245,7 +2277,7 @@ function Configuration
             {
                 $message = $LocalizedData.ImportDscResourceWarningForInbuiltResource -f @(Get-PSTopConfigurationName)
                 $ImportDscResourceWarningPreference = $WarningPreference
-                if($ArgsToBody['WarningAction'] -ne $null)
+                if($null -ne $ArgsToBody['WarningAction'])
                 {
                     $ImportDscResourceWarningPreference = $ArgsToBody['WarningAction']
                 }
@@ -2283,7 +2315,7 @@ function Configuration
             }
         }
     }
-    finally 
+    finally
     {
         if($topLevel)
         {
@@ -2300,10 +2332,11 @@ Export-ModuleMember -Function Configuration
 
 function Update-ModuleVersion
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param(
         [Parameter(Mandatory)]
-        [System.Collections.Generic.Dictionary[String,String[]]] 
+        [System.Collections.Generic.Dictionary[String,String[]]]
         $NodeResources,
 
         [Parameter(Mandatory)]
@@ -2316,9 +2349,9 @@ function Update-ModuleVersion
     )
 
     $moduleVersionValue = '0.0'
-    
+
     # explicit import-dscresource with version for psdesiredstateconfiguration module was not done.
-    if( $Script:ExplicitlyImportedModules.ContainsKey('PsDesiredStateConfiguration') -and 
+    if( $Script:ExplicitlyImportedModules.ContainsKey('PsDesiredStateConfiguration') -and
         (-not [string]::IsNullOrEmpty($Script:ExplicitlyImportedModules['PsDesiredStateConfiguration'])))
     {
         $moduleVersionValue= $script:PsDscModuleVersion
@@ -2340,18 +2373,19 @@ function Update-ModuleVersion
             $first = $instanceText.Substring(0, $curlyPosition)
 
             $moduleVersionstring = "ModuleVersion = "
-            $moduleVersionstring += "`"$moduleVersionValue`"" + ";"   
-            $NodeInstanceAliases[$alias] = $first + $moduleVersionstring + "`r`n};"                 
+            $moduleVersionstring += "`"$moduleVersionValue`"" + ";"
+            $NodeInstanceAliases[$alias] = $first + $moduleVersionstring + "`r`n};"
         }
     }
 }
 
-function Update-DependsOn 
+function Update-DependsOn
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param(
         [Parameter(Mandatory)]
-        [System.Collections.Generic.Dictionary[String,String[]]] 
+        [System.Collections.Generic.Dictionary[String,String[]]]
         $NodeResources,
 
         [Parameter(Mandatory)]
@@ -2381,17 +2415,17 @@ function Update-DependsOn
                 $dependsOn += foreach ($resourceId in $NodeResources[$resourceId])
                 {
                     '    ' + "`"$($resourceId -replace '\\', '\\' -replace '"', '\"')`"" +
-                    $(if (--$len -gt 0) 
+                    $(if (--$len -gt 0)
                         {
                             ",`r`n"
                         }
-                        else 
+                        else
                         {
                             ''
                         }
                     )
                 }
-                $dependsOn += '};'                    
+                $dependsOn += '};'
             }
         }
 
@@ -2404,14 +2438,15 @@ function Update-DependsOn
 
 #
 # add a reference to each resource to point to the OMI_ConfigurationDocument
-# so it can be differiencated after merging of partical configurations 
+# so it can be differiencated after merging of partical configurations
 #
 function Update-ConfigurationDocumentRef
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     [OutputType([void])]
     param(
         [Parameter(Mandatory)]
-        [System.Collections.Generic.Dictionary[String,String[]]] 
+        [System.Collections.Generic.Dictionary[String,String[]]]
         $NodeResources,
 
         [Parameter(Mandatory)]
@@ -2436,7 +2471,7 @@ function Update-ConfigurationDocumentRef
         if($curlyPosition -gt 0)
         {
             $needAdd = $true
-            $first = $instanceText.Substring(0, $curlyPosition).TrimEnd() 
+            $first = $instanceText.Substring(0, $curlyPosition).TrimEnd()
 
             $ConfigurationNameRef = "`r`n ConfigurationName = `"$ConfigurationName`";"
         }
@@ -2448,17 +2483,17 @@ function Update-ConfigurationDocumentRef
     }
 }
 
-function ImportClassResourcesFromModule 
+function ImportClassResourcesFromModule
 {
     param (
         [Parameter(Mandatory)]
         [PSModuleInfo]
         $Module,
-        
+
         [Parameter(Mandatory)]
         [System.Collections.Generic.List[string]]
         $Resources,
-        
+
         [System.Collections.Generic.Dictionary[string, scriptblock]]
         $functionsToDefine
     )
@@ -2479,7 +2514,7 @@ function ImportCimAndScriptKeywordsFromModule
         $functionsToDefine
     )
 
-    trap 
+    trap
     {
         continue
     }
@@ -2516,7 +2551,7 @@ function ImportCimAndScriptKeywordsFromModule
     if ($foundScriptSchema -and $SchemaFilePath)
     {
         $resourceDirectory = Split-Path $SchemaFilePath
-        if($resourceDirectory -ne $null)
+        if($null -ne $resourceDirectory)
         {
             Import-Module -Force: (Test-ModuleReloadRequired $SchemaFilePath) -Verbose:$false -Name $resourceDirectory -Global -ErrorAction SilentlyContinue
         }
@@ -2530,6 +2565,9 @@ function ImportCimAndScriptKeywordsFromModule
 #
 function Write-MetaConfigFile
 {
+    # nodeConfigurationDocument incorrectly shows up as unused
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "", Target="", Scope="Function")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "", Scope="Function", Target="*")]
     param(
         [string]
         $ConfigurationName,
@@ -2539,7 +2577,7 @@ function Write-MetaConfigFile
 
         [System.Collections.Generic.Dictionary[string,string]]
         $mofNodeHash
-       
+
     )
 
     # Set up prefix for both the configuration and metaconfiguration documents.
@@ -2555,7 +2593,7 @@ function Write-MetaConfigFile
     $localConfigManager = $null
     $partialConfiguratons = $null
     $partialConfigurationCount = 0
-                   
+
     foreach($mofTypeName in $mofNodeHash.Keys)
     {
         if($mofTypeName -match 'OMI_ConfigurationDocument')
@@ -2622,7 +2660,7 @@ function Write-MetaConfigFile
         }
         else
         {
-            if($localConfigManager -eq $null)
+            if($null -eq $localConfigManager)
             {
                 # save the localConfigManager which need to be fixed up to add additional manager info as embedded resources
                 $localConfigManager = $mofNodeHash[$mofTypeName] -replace 'MSFT_DSCMetaConfigurationV2', 'MSFT_DSCMetaConfiguration'
@@ -2640,22 +2678,22 @@ function Write-MetaConfigFile
         $nodeDocCount++
     }
 
-    if($localConfigManager -eq $null)
-    {        
+    if($null -eq $localConfigManager)
+    {
         # Print verbose message that empty settings definition is added.
         $emptySettingVerboseMessage = $LocalizedData.MetaConfigurationSettingsMissing -f @($mofNode)
         Write-Verbose -Message $emptySettingVerboseMessage
 
-        # Assign default settings         
+        # Assign default settings
         $localConfigManager = "`ninstance of MSFT_DSCMetaConfiguration as `$MSFT_DSCMetaConfiguration1ref `n{`n};"
     }
-    
+
     # fixup to add embedded instances
     $nodeDoc += Update-LocalConfigManager $localConfigManager $resourceManagers $reportManagers $downloadManagers $partialConfiguratons
 
 
     $nodeOutfile = "$ConfigurationOutputDirectory/$($mofNode).meta.mof"
-    
+
     # add/update OMI_ConfigurationDocument of meta config
     if ($nodeDoc -notmatch 'OMI_ConfigurationDocument')
     {
@@ -2681,7 +2719,7 @@ function Write-MetaConfigFile
     # Fix up newlines to be CRLF
     $nodeDoc = $nodeDoc -replace "`n", "`r`n"
 
-    # todo: meta configuration might not be verifiable currently 
+    # todo: meta configuration might not be verifiable currently
     $errMsg = Test-MofInstanceText $nodeDoc
     if($errMsg)
     {
@@ -2691,7 +2729,7 @@ function Write-MetaConfigFile
         Update-ConfigurationErrorCount
         $nodeOutfile = "$ConfigurationOutputDirectory/$($mofNode).meta.mof.error"
     }
-    
+
     if($nodeDocCount -gt 0)
     {
         # Write to a file only if no error was generated or we are writing to .mof.error file
@@ -2706,6 +2744,7 @@ function Write-MetaConfigFile
 # fixup localConfigmanager to have embedded instance
 function Update-LocalConfigManager
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseShouldProcessForStateChangingFunctions", "", Scope="Function")]
     param(
         [string]
         $localConfigManager,
@@ -2732,7 +2771,7 @@ function Update-LocalConfigManager
         {
             $first += "  ReportManagers = {`n" + $reportManagers + "  `n };`n"
         }
-        
+
         if($downloadManagers)
         {
             $first += "  ConfigurationDownloadManagers = {`n" + $downloadManagers + "  `n };`n"
@@ -2789,7 +2828,7 @@ function Write-NodeMOFFile
             break
         }
     }
-                   
+
     foreach($mofTypeName in $mofNodeHash.Keys)
     {
         if(($mofTypeName -notmatch 'MSFT_DSCMetaConfiguration'))
@@ -2840,7 +2879,7 @@ function Write-NodeMOFFile
             }
         }
     }
-    
+
     if ($nodeDoc -notmatch 'OMI_ConfigurationDocument')
     {
         if (Get-PSDefaultConfigurationDocument)
@@ -2856,26 +2895,26 @@ function Write-NodeMOFFile
                 if($nodeDoc.Contains("PsDscRunAsCredential"))
                 {
                     $nodeDoc += "`ninstance of OMI_ConfigurationDocument`n
-                    {`n Version=`"2.0.0`";`n 
-                        MinimumCompatibleVersion = `"2.0.0`";`n 
-                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n 
-                        Author=`"$([system.environment]::UserName)`";`n 
-                        GenerationDate=`"$(Get-Date)`";`n 
+                    {`n Version=`"2.0.0`";`n
+                        MinimumCompatibleVersion = `"2.0.0`";`n
+                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n
+                        Author=`"$([system.environment]::UserName)`";`n
+                        GenerationDate=`"$(Get-Date)`";`n
                         GenerationHost=`"$([system.environment]::MachineName)`";`n
-                        ContentType=`"PasswordEncrypted`";`n 
+                        ContentType=`"PasswordEncrypted`";`n
                         Name=`"$(Get-PSTopConfigurationName)`";`n
                     };"
                 }
                 else
                 {
                     $nodeDoc += "`ninstance of OMI_ConfigurationDocument`n
-                    {`n Version=`"2.0.0`";`n 
-                        MinimumCompatibleVersion = `"1.0.0`";`n 
-                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n 
-                        Author=`"$([system.environment]::UserName)`";`n 
-                        GenerationDate=`"$(Get-Date)`";`n 
+                    {`n Version=`"2.0.0`";`n
+                        MinimumCompatibleVersion = `"1.0.0`";`n
+                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n
+                        Author=`"$([system.environment]::UserName)`";`n
+                        GenerationDate=`"$(Get-Date)`";`n
                         GenerationHost=`"$([system.environment]::MachineName)`";`n
-                        ContentType=`"PasswordEncrypted`";`n 
+                        ContentType=`"PasswordEncrypted`";`n
                         Name=`"$(Get-PSTopConfigurationName)`";`n
                     };"
                 }
@@ -2885,24 +2924,24 @@ function Write-NodeMOFFile
                 if($nodeDoc.Contains("PsDscRunAsCredential"))
                 {
                     $nodeDoc += "`ninstance of OMI_ConfigurationDocument`n
-                    {`n Version=`"2.0.0`";`n 
-                        MinimumCompatibleVersion = `"2.0.0`";`n 
-                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n 
-                        Author=`"$([system.environment]::UserName)`";`n 
-                        GenerationDate=`"$(Get-Date)`";`n 
-                        GenerationHost=`"$([system.environment]::MachineName)`";`n 
+                    {`n Version=`"2.0.0`";`n
+                        MinimumCompatibleVersion = `"2.0.0`";`n
+                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n
+                        Author=`"$([system.environment]::UserName)`";`n
+                        GenerationDate=`"$(Get-Date)`";`n
+                        GenerationHost=`"$([system.environment]::MachineName)`";`n
                         Name=`"$(Get-PSTopConfigurationName)`";`n
                     };"
                 }
                 else
                 {
                     $nodeDoc += "`ninstance of OMI_ConfigurationDocument`n
-                    {`n Version=`"2.0.0`";`n 
-                        MinimumCompatibleVersion = `"1.0.0`";`n 
-                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n 
-                        Author=`"$([system.environment]::UserName)`";`n 
-                        GenerationDate=`"$(Get-Date)`";`n 
-                        GenerationHost=`"$([system.environment]::MachineName)`";`n 
+                    {`n Version=`"2.0.0`";`n
+                        MinimumCompatibleVersion = `"1.0.0`";`n
+                        CompatibleVersionAdditionalProperties= {`"Omi_BaseResource:ConfigurationName`"};`n
+                        Author=`"$([system.environment]::UserName)`";`n
+                        GenerationDate=`"$(Get-Date)`";`n
+                        GenerationHost=`"$([system.environment]::MachineName)`";`n
                         Name=`"$(Get-PSTopConfigurationName)`";`n
                     };"
                 }
@@ -2921,7 +2960,7 @@ function Write-NodeMOFFile
         Update-ConfigurationErrorCount
         $nodeOutfile = "$ConfigurationOutputDirectory/$($mofNode).mof.error"
     }
-    
+
     if($nodeDocCount -gt 0)
     {
         # Write to a file only if no error was generated or we are writing to .mof.error file
@@ -2936,7 +2975,7 @@ function Write-NodeMOFFile
     {
         $nodeMetaDoc = $nodeMetaDoc -replace "`n", "`r`n"
         $nodeMetaDoc > $nodeMetaOutfile
-        Get-ChildItem $nodeMetaOutfile 
+        Get-ChildItem $nodeMetaOutfile
     }
 }
 
@@ -2950,7 +2989,7 @@ function Write-NodeMOFFile
 function ValidateNodeResources
 {
     Write-Debug -Message "          Validating resource set for node: $(Get-PSCurrentConfigurationNode)"
-    $newNodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $newNodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     if ($Script:NodeResources)
     {
         foreach ($resourceId in $Script:NodeResources.Keys)
@@ -2973,8 +3012,8 @@ function ValidateNodeResources
                                 $rId
                             }
                         }
-                        
-                        
+
+
                         if(-not $expandedDependsOn)
                         {
                             $errorMessage = $LocalizedData.RequiredResourceNotFound -f @($requiredResource, $resourceId)
@@ -2982,12 +3021,12 @@ function ValidateNodeResources
                             Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId RequiredResourceNotFound
                             Update-ConfigurationErrorCount
                         }
-                        else 
+                        else
                         {
                             $expandedDependsOn
                         }
                     }
-                    else 
+                    else
                     {
                         $requiredResource
                     }
@@ -3018,7 +3057,7 @@ function ValidateNodeResources
 function ValidateNoNameNodeResources
 {
     Write-Debug -Message '          Validating resource set for resources in the default configuration'
-    $newNodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase) 
+    $newNodeResources = New-Object -TypeName 'System.Collections.Generic.Dictionary[string,[string[]]]' -ArgumentList ([System.StringComparer]::OrdinalIgnoreCase)
     if ($Script:NoNameNodesResources)
     {
         foreach ($resourceId in $Script:NoNameNodesResources.Keys)
@@ -3041,8 +3080,8 @@ function ValidateNoNameNodeResources
                                 $rId
                             }
                         }
-                        
-                        
+
+
                         if(-not $expandedDependsOn)
                         {
                             $errorMessage = $LocalizedData.RequiredResourceNotFound -f @($requiredResource, $resourceId)
@@ -3050,12 +3089,12 @@ function ValidateNoNameNodeResources
                             Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId RequiredResourceNotFound
                             Update-ConfigurationErrorCount
                         }
-                        else 
+                        else
                         {
                             $expandedDependsOn
                         }
                     }
-                    else 
+                    else
                     {
                         $requiredResource
                     }
@@ -3081,7 +3120,7 @@ function ValidateNoNameNodeResources
 
 #
 # A function to make sure that only valid Manager are referenced within a node. It
-# operates off of the $Script:NodeManager dictionary. 
+# operates off of the $Script:NodeManager dictionary.
 # An empty dictionary is not
 # considered an error since this function is called at both the node level and the configuration
 # level.
@@ -3118,7 +3157,7 @@ function ValidateNodeManager
 
 #
 # A function to make sure that only valid resource source are referenced within a node. It
-# operates off of the $Script:NodeResourceSource dictionary. 
+# operates off of the $Script:NodeResourceSource dictionary.
 # An empty dictionary is not
 # considered an error since this function is called at both the node level and the configuration
 # level.
@@ -3159,6 +3198,9 @@ function ValidateNodeResourceSource
 # It also validate they exist
 function ValidateNodeExclusiveResources
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "", Target="", Scope="Function")]
+    param()
+
     Write-Debug -Message "          Validating exclusive resources for node: $(Get-PSCurrentConfigurationNode)"
     if ($Script:NodeExclusiveResources)
     {
@@ -3172,15 +3214,15 @@ function ValidateNodeExclusiveResources
             Write-Debug -Message "            Checking node $resourceId"
 
             # Remove duplicate entries from exclusive Resource array
-            $exclusiveResourceList = $Script:NodeExclusiveResources[$resourceId] | select -uniq
+            $exclusiveResourceList = $Script:NodeExclusiveResources[$resourceId] | Select-Object -Unique
 
             foreach($refResource in $exclusiveResourceList)
             {
                 $resourceSegs = $refResource -split '\\'
 
-                if($resourceSegs.Length -eq 2)                                
+                if($resourceSegs.Length -eq 2)
                 {
-                    if($ModuleBasedExclusiveResourceMap[$resourceSegs[0]] -eq $null)
+                    if($null -eq $ModuleBasedExclusiveResourceMap[$resourceSegs[0]])
                     {
                         $ModuleBasedExclusiveResourceMap[$resourceSegs[0]] = @{
                             Id = $resourceId
@@ -3210,7 +3252,7 @@ function ValidateNodeExclusiveResources
                         # 'Module\Resource' in PartialConfiguration1 conflicts with 'Module\Resource' in PartialConfiguration2
                         # or 'Module\Resource' in PartialConfiguration1 conflicts with 'Resource' in PartialConfiguration2
                         elseif($ModuleBasedExclusiveResourceMap[$resourceSegs[0]]['Resources'] -icontains $resourceSegs[1] `
-                                    -or $NoModuleExclusiveResourceMap[$resourceSegs[1]] -ne $null)
+                                    -or $null -ne $NoModuleExclusiveResourceMap[$resourceSegs[1]])
                         {
                             $errorMessage = $LocalizedData.ConflictInExclusiveResources -f @($ModuleBasedExclusiveResourceMap[$resourceSegs[0]]['Id'], $resourceId)
                             $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
@@ -3226,10 +3268,10 @@ function ValidateNodeExclusiveResources
                 }
                 else # no module name, normally means binary resource
                 {
-                    if($NoModuleExclusiveResourceMap[$refResource] -eq $null)
+                    if($null -eq $NoModuleExclusiveResourceMap[$refResource])
                     {
                         $resourceFound = $false
-                        $ModuleBasedExclusiveResourceMap.GetEnumerator() | % {
+                        $ModuleBasedExclusiveResourceMap.GetEnumerator() | ForEach-Object {
                             if($_.Value.Resources -icontains $refResource) {
                                 $resourceFound = $true
                                 $ConflictingPartialConfigurationId = $_.Value.Id
@@ -3276,8 +3318,8 @@ function ValidateNoCircleInNodeResources
 {
     Write-Debug -Message "          Validating resource set for node: $(Get-PSCurrentConfigurationNode)"
     [int] $script:CircleIndex = 0
-    [System.Collections.Generic.Stack[string]] $script:resourceIdStack = 
-    New-Object -TypeName 'System.Collections.Generic.Stack[string]'  
+    [System.Collections.Generic.Stack[string]] $script:resourceIdStack =
+    New-Object -TypeName 'System.Collections.Generic.Stack[string]'
     [hashtable] $script:resourceIndex = @{}
     [hashtable] $script:resourceLowIndex = @{}
     [int] $script:ComponentDepth = 0
@@ -3287,15 +3329,15 @@ function ValidateNoCircleInNodeResources
     {
         foreach ($resourceId in $Script:NodeResources.Keys)
         {
-            if(($Script:NodeResources[$resourceId] -ne $null) -and $Script:NodeResources[$resourceId].Contains($resourceId))
+            if($null -ne ($Script:NodeResources[$resourceId]) -and $Script:NodeResources[$resourceId].Contains($resourceId))
             {
                 $errorMessage = $LocalizedData.DependsOnLoopDetected -f "$resourceId->$resourceId"
                 $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
                 Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId DependsOnLoopDetected
                 Update-ConfigurationErrorCount
             }
-            
-            if($resourceIndex[$resourceId] -eq $null)
+
+            if($null -eq $resourceIndex[$resourceId])
             {
                 $script:ComponentDepth = 0
                 StrongConnect($resourceId)
@@ -3318,16 +3360,16 @@ function StrongConnect
         $errorMessage = $LocalizedData.DependsOnLinkTooDeep -f $script:MaxComponentDepth
         $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
         Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId DependsOnLinkTooDeep
-        Update-ConfigurationErrorCount 
+        Update-ConfigurationErrorCount
     }
 
     $script:resourceIdStack.Push($resourceId)
-    
+
     foreach ($requiredResource in $Script:NodeResources[$resourceId])
     {
         Write-Debug -Message "             > Checking for required node $requiredResource"
         #$requiredResource is not visited yet
-        if(($requiredResource -ne $null) -and ($script:resourceIndex[$requiredResource] -eq $null))
+        if($null -ne ($requiredResource) -and ($null -eq $script:resourceIndex[$requiredResource]))
         {
             StrongConnect($requiredResource)
             $script:resourceLowIndex[$resourceId] = [math]::Min($script:resourceLowIndex[$resourceId], $script:resourceLowIndex[$requiredResource])
@@ -3356,7 +3398,7 @@ function StrongConnect
             $exception = New-Object -TypeName System.InvalidOperationException -ArgumentList $errorMessage
             Write-Error -Exception $exception -Message $errorMessage -Category InvalidOperation -ErrorId DependsOnLoopDetected
             Update-ConfigurationErrorCount
-        }        
+        }
     }
 }
 
@@ -3387,7 +3429,7 @@ function Test-MofInstanceText
 }
 
 #
-# Encrypt a password using CMS  
+# Encrypt a password using CMS
 #
 function Get-EncryptedPassword
 {
@@ -3396,18 +3438,15 @@ function Get-EncryptedPassword
         $Value = $null
     )
 
-    $cert = $null
-
-
     if($Node -and $selectedNodesData)
     {
         if($selectedNodesData -is [array])
-        { 
+        {
             foreach($target in $selectedNodesData)
             {
-		        # Node name should be exactly the same as one defined in AllNodes 
-		        # -eq does case in sensitive comparison         
-                if($target['NodeName'] -and $target['NodeName'] -eq $Node)                     		
+                # Node name should be exactly the same as one defined in AllNodes
+                # -eq does case in sensitive comparison
+                if($target['NodeName'] -and $target['NodeName'] -eq $Node)
                 {
                     $currentNode = $target
                 }
@@ -3418,7 +3457,7 @@ function Get-EncryptedPassword
             $currentNode = $selectedNodesData
         }
     }
-    # where user need to specify properties for resources not in a node, 
+    # where user need to specify properties for resources not in a node,
     # they can do it through localhost nodeName in $allNodes
     elseif($allnodes -and $allnodes.AllNodes)
     {
@@ -3430,7 +3469,7 @@ function Get-EncryptedPassword
             }
         }
     }
-    
+
     if($currentNode)
     {
         # if Certificate is provided, it override PSDscAllowPlainTextPassword : bug 565167
@@ -3438,11 +3477,11 @@ function Get-EncryptedPassword
         # Protect-CmsMessage [-To] takes actual cert, path to cert file, path to a directory contains cert, thumbprint or subject name of cert
         # we only support cert file and thumbprint as before now
         $certificateid = $currentNode['CertificateID']
-    
+
         # If there is no certificateid defined, just return the original value...
         if ( -not $certificateid)
         {
-            # CertificateFile is the public key file 
+            # CertificateFile is the public key file
             $certificatefile = $currentNode['CertificateFile']
 
             if ( -not $certificatefile)
@@ -3463,23 +3502,23 @@ function Get-EncryptedPassword
     if($CmsMessageRecipient -and $Value -is [string])
     {
         # Encrypt using the public key
-        $encMsg =Protect-CmsMessage -To $CmsMessageRecipient -Content $Value
-        
+        $encMsg = Protect-CmsMessage -To $CmsMessageRecipient -Content $Value
+
         # Reverse bytes for unmanaged decryption
         #[Array]::Reverse($encbytes)
 
-        #$encMsg = $encMsg -replace '-----BEGIN CMS-----','' 
-        #$encMsg = $encMsg -replace "`n",'' 
-        #$encMsg = $encMsg -replace '-----END CMS-----','' 
+        #$encMsg = $encMsg -replace '-----BEGIN CMS-----',''
+        #$encMsg = $encMsg -replace "`n",''
+        #$encMsg = $encMsg -replace '-----END CMS-----',''
 
-	    return $encMsg
+        return $encMsg
     }
     else
     {
         # passwords should be some type of string so this is probably an error but pass
         # back the incoming value. Also if there is no key, then we just pass through the
         # password as is.
-    
+
         $Value
     }
 }
@@ -3509,7 +3548,7 @@ function Get-PublicKeyFromStore
 
     if(-not $cert)
     {
-        $errorMessage = $($LocalizedData.CertificateStoreReadError) -f $certificateid 
+        $errorMessage = $($LocalizedData.CertificateStoreReadError) -f $certificateid
         ThrowError -ExceptionName 'System.InvalidOperationException' -ExceptionMessage $errorMessage -ExceptionObject $certificateid -ErrorId 'InvalidPathSpecified' -ErrorCategory InvalidOperation
     }
     else
@@ -3542,7 +3581,7 @@ function Get-PublicKeyFromFile
     }
     catch
     {
-        $errorMessage = $($LocalizedData.CertificateFileReadError) -f $certificatefile 
+        $errorMessage = $($LocalizedData.CertificateFileReadError) -f $certificatefile
         ThrowError -ExceptionName 'System.InvalidOperationException' -ExceptionMessage $errorMessage -ExceptionObject $certificatefile -ErrorId 'InvalidPathSpecified' -ErrorCategory InvalidOperation
     }
 }
@@ -3559,11 +3598,12 @@ function Get-PublicKeyFromFile
 #-----------------------------------------------------------------------------------------------------
 function New-DscChecksum
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideCommentHelp", "", Scope="Function", Target="*")]
     [CmdletBinding(SupportsShouldProcess = $true, HelpUri = 'http://go.microsoft.com/fwlink/?LinkId=403986')]
     param(
         [Parameter(Mandatory)]
-        [Alias('ConfigurationPath')]        
-        [ValidateNotNullOrEmpty()]         
+        [Alias('ConfigurationPath')]
+        [ValidateNotNullOrEmpty()]
         [string[]]
         $Path,
 
@@ -3575,7 +3615,7 @@ function New-DscChecksum
         [switch]
         $Force
     )
-      
+
     # Check validity of all configuration paths specified, throw if any of them is invalid
     for ($i = 0 ; $i -lt $Path.Length ; $i++)
     {
@@ -3598,7 +3638,7 @@ function New-DscChecksum
             $errorMessage = $LocalizedData.InvalidOutpath -f $OutPath
             ThrowError -ExceptionName 'System.ArgumentException' -ExceptionMessage $errorMessage -ExceptionObject $OutPath -ErrorId 'InvalidOutPath' -ErrorCategory InvalidArgument
         }
-        
+
         # If the specified $Outpath conflicts with an existing file, throw
         if(Test-Path -Path $OutPath -PathType Leaf)
         {
@@ -3612,11 +3652,11 @@ function New-DscChecksum
         if(!(Test-Path -Path $OutPath))
         {
             $null = New-Item -Path $OutPath -ItemType Directory
-        }   
-        
+        }
+
         $OutPath = (Resolve-Path $OutPath).ProviderPath
     }
-            
+
     # Retrieve all valid configuration files at the specified $Path
     $allConfigFiles = $Path | ForEach-Object  -Process {
         (Get-ChildItem -Path $_ -Recurse | Where-Object -FilterScript {
@@ -3624,7 +3664,7 @@ function New-DscChecksum
             }
         )
     }
-    
+
     # If no valid config file was found, log this and return
     if ($allConfigFiles.Length -eq 0)
     {
@@ -3642,7 +3682,7 @@ function New-DscChecksum
         {
             $fileOutpath = "$OutPath\$($file.Name).checksum"
         }
-        
+
         # If the Force parameter was not specified and the hash file already exists for the current file, log this, and skip this file
         if (!$Force -and (Get-Item -Path $fileOutpath -ErrorAction SilentlyContinue))
         {
@@ -3651,20 +3691,20 @@ function New-DscChecksum
         }
 
         # Devise appropriate message
-        $message = $LocalizedData.CreateChecksumFile -f $fileOutpath 
+        $message = $LocalizedData.CreateChecksumFile -f $fileOutpath
         if (Test-Path -Path $fileOutpath)
         {
             $message = $LocalizedData.OverwriteChecksumFile -f $fileOutpath
-        }        
+        }
 
         # Finally, if the hash file doesn't exist already or -Force has been specified, then output the corresponding hash file
         if ($pscmdlet.ShouldProcess($message, $null, $null))
         {
-            [String]$checksum = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash 
+            [String]$checksum = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
 
             WriteFile -Path $fileOutpath -Value $checksum
         }
-    }                        
+    }
 }
 Export-ModuleMember -Function New-DscChecksum
 
@@ -3673,22 +3713,22 @@ Export-ModuleMember -Function New-DscChecksum
 # Utility to throw an error/exception
 #------------------------------------
 function ThrowError
-{    
+{
     param
-    (        
+    (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [System.String]        
+        [System.String]
         $ExceptionName,
 
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ExceptionMessage,
-        
+
         [System.Object]
         $ExceptionObject,
-        
+
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -3699,7 +3739,7 @@ function ThrowError
         [System.Management.Automation.ErrorCategory]
         $errorCategory
     )
-        
+
     $exception = New-Object $ExceptionName $ExceptionMessage
     $ErrorRecord = New-Object -TypeName System.Management.Automation.ErrorRecord -ArgumentList $exception, $errorId, $errorCategory, $ExceptionObject
     throw $ErrorRecord
@@ -3712,7 +3752,7 @@ function Write-Log
 {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param
-    (    
+    (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -3722,7 +3762,7 @@ function Write-Log
     if ($pscmdlet.ShouldProcess($message, $null, $null))
     {
         Write-Verbose -Message $message
-    }    
+    }
 }
 
 # WriteFile is a helper function used to write the content to the file
@@ -3746,7 +3786,7 @@ function WriteFile
         }
         finally
         {
-            if ($stream) 
+            if ($stream)
             {
                 $stream.Close()
             }
@@ -3802,7 +3842,7 @@ function ReadEnvironmentFile
 
 function Get-DSCResourceModules
 {
-    $listPSModuleFolders = $env:PSModulePath.Split(";")
+    $listPSModuleFolders = $env:PSModulePath.Split(":")
     $dscModuleFolderList = [System.Collections.Generic.HashSet[System.String]]::new()
 
     foreach ($folder in $listPSModuleFolders)
@@ -3811,33 +3851,33 @@ function Get-DSCResourceModules
         {
             continue
         }
-       
+
         foreach($moduleFolder in Get-ChildItem $folder -Directory)
-        {     
-			$addModule = $false
-			                   
+        {
+            $addModule = $false
+
             $dscFolders = Get-childitem "$($moduleFolder.FullName)\DscResources","$($moduleFolder.FullName)\*\DscResources" -ErrorAction Ignore
-            if($dscFolders -ne $null)
+            if($null -ne $dscFolders)
             {
                 $addModule = $true
             }
-            
+
             if(-not $addModule)
             {
                 foreach($psd1 in Get-ChildItem -Recurse -Filter "$($moduleFolder.Name).psd1" -Path $moduleFolder.fullname -Depth 2)
                 {
-                    $containsDSCResource = select-string -LiteralPath $psd1 -pattern '^(?!#).*\bDscResourcesToExport\b.*'
-                    if($containsDSCResource -ne $null)
+                    $containsDSCResource = select-string -LiteralPath $psd1 -pattern '^[^#]*\bDscResourcesToExport\b.*'
+                    if($null -ne $containsDSCResource)
                     {
-					    $addModule = $true                        
+                        $addModule = $true
                     }
                 }
             }
 
-			if($addModule)
-			{				
-                $dscModuleFolderList.Add($moduleFolder.Name)                
-			}
+            if($addModule)
+            {
+                $dscModuleFolderList.Add($moduleFolder.Name)
+            }
         }
     }
 
@@ -3850,11 +3890,13 @@ function Get-DSCResourceModules
 
 #
 # Gets DSC resources on the machine. Allows to filter on a particular resource.
-# It parses all the resources defined in the schema.mof file and also the composite 
+# It parses all the resources defined in the schema.mof file and also the composite
 # resources defined or imported from PowerShell modules
-# 
+#
 function Get-DscResource
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSProvideCommentHelp", "", Scope="Function", Target="*")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "", Scope="Function", Target="*")]
     [CmdletBinding(HelpUri = 'http://go.microsoft.com/fwlink/?LinkId=403985')]
     [OutputType('Microsoft.PowerShell.DesiredStateConfiguration.DscResourceInfo[]')]
     [OutputType('string[]')]
@@ -3872,7 +3914,7 @@ function Get-DscResource
         [switch]
         $Syntax
     )
-    
+
     Begin
     {
         $initialized = $false
@@ -3883,7 +3925,7 @@ function Get-DscResource
 
         # Load the default Inbox providers (keyword) in cache, also allow caching the resources from multiple versions of modules.
         [Microsoft.PowerShell.DesiredStateConfiguration.Internal.DscClassCache]::LoadDefaultCimKeywords($keywordErrors, $true)
-              
+
         foreach($ex in $keywordErrors)
         {
             Write-Error -Exception $ex
@@ -3899,11 +3941,16 @@ function Get-DscResource
 
         if($Module) #Pick from the specified module if there's one
         {
-            $moduleSpecificName = [System.Management.Automation.LanguagePrimitives]::ConvertTo($Module,[Microsoft.PowerShell.Commands.ModuleSpecification]) 
+            $moduleSpecificName = [System.Management.Automation.LanguagePrimitives]::ConvertTo($Module,[Microsoft.PowerShell.Commands.ModuleSpecification])
             $modules = Get-Module -ListAvailable -FullyQualifiedName $moduleSpecificName
+
             if($Module -is [System.Collections.Hashtable])
             {
                 $ModuleString = $Module.ModuleName
+            }
+            elseif($Module -is [Microsoft.PowerShell.Commands.ModuleSpecification])
+            {
+                $ModuleString = $Module.Name
             }
             else
             {
@@ -3912,9 +3959,12 @@ function Get-DscResource
         }
         else
         {
-			$modules = Get-Module -ListAvailable -Name (Get-DSCResourceModules)
+            $dscResourceModules = Get-DSCResourceModules
+            if($null -ne $dscResourceModules) {
+                $modules = Get-Module -ListAvailable -Name ($dscResourceModules)
+            }
         }
-        
+
         foreach ($mod in $modules)
         {
             if ($mod.ExportedDscResources.Count -gt 0)
@@ -3922,7 +3972,7 @@ function Get-DscResource
                 $null = ImportClassResourcesFromModule -Module $mod -Resources * -functionsToDefine $functionsToDefine
             }
 
-            $dscResources = Join-Path -Path $mod.ModuleBase -ChildPath 'DSCResources'
+            $dscResources = Join-Path -Path $mod.ModuleBase -ChildPath 'DscResources'
             if(Test-Path $dscResources)
             {
                 foreach ($resource in Get-ChildItem -Path $dscResources -Directory -Name)
@@ -3934,31 +3984,33 @@ function Get-DscResource
 
         $Resources = @()
     }
-        
+
     Process
     {
         try
         {
-            if ($Name -ne $null)
+            if ($null -ne $Name)
             {
                 $nameMessage = $LocalizedData.GetDscResourceInputName -f @('Name', [system.string]::Join(', ', $Name))
                 Write-Verbose -Message $nameMessage
             }
-            if($Module -and !$modules)
+
+            if(!$modules)
             {
                 #Return if no modules were found with the required specification
                 Write-Warning -Message $LocalizedData.NoModulesPresent
                 return
             }
+
             $ignoreResourceParameters = @('InstanceName', 'OutputPath', 'ConfigurationData') + [System.Management.Automation.Cmdlet]::CommonParameters + [System.Management.Automation.Cmdlet]::OptionalCommonParameters
 
             $patterns = GetPatterns $Name
-        
+
             Write-Progress -Id 3 -Activity $LocalizedData.CreatingResourceList
 
-            # Get resources for CIM cache 
+            # Get resources for CIM cache
             $keywords = [Microsoft.PowerShell.DesiredStateConfiguration.Internal.DscClassCache]::GetCachedKeywords() | Where-Object -FilterScript {
-                (!$_.IsReservedKeyword) -and ($_.ResourceName -ne $null) -and !(IsHiddenResource $_.ResourceName) -and (![bool]$Module -or ($_.ImplementingModule -like $ModuleString))
+                (!$_.IsReservedKeyword) -and ($null -ne $_.ResourceName) -and !(IsHiddenResource $_.ResourceName) -and (![bool]$Module -or ($_.ImplementingModule -like $ModuleString))
             }
 
             $Resources += $keywords |
@@ -3980,7 +4032,7 @@ function Get-DscResource
             }
 
             # check whether all resources are found
-            CheckResourceFound $Name $Resources 
+            CheckResourceFound $Name $Resources
         }
         catch
         {
@@ -4033,12 +4085,14 @@ function GetResourceFromKeyword
         [System.Management.Automation.Language.DynamicKeyword]
         $keyword,
         [System.Management.Automation.WildcardPattern[]]
-        $patterns,        
+        $patterns,
         [Parameter(Mandatory)]
         [System.Management.Automation.PSModuleInfo[]]
         $modules
     )
-       
+
+    $implementationDetail = 'ScriptBased'
+
     # Find whether $name follows the pattern
     $matched = (IsPatternMatched $patterns $keyword.ResourceName) -or (IsPatternMatched $patterns $keyword.Keyword)
     if ($matched -eq $false)
@@ -4065,6 +4119,7 @@ function GetResourceFromKeyword
     $resource.Name = $keyword.Keyword
 
     $schemaFiles = [Microsoft.PowerShell.DesiredStateConfiguration.Internal.DscClassCache]::GetFileDefiningClass($keyword.ResourceName)
+
     if ($schemaFiles.Count)
     {
         # Find the correct schema file that matches module name and version
@@ -4080,16 +4135,23 @@ function GetResourceFromKeyword
         if(-not $schemaFileName.StartsWith("$env:windir\system32\configuration",[stringComparison]::OrdinalIgnoreCase))
         {
             $classesFromSchema = [Microsoft.PowerShell.DesiredStateConfiguration.Internal.DscClassCache]::GetCachedClassByFileName($schemaFileName)
-            if( $classesFromSchema -ne $null) 
+            if($null -ne  $classesFromSchema)
             {
                 # check if the resource is proper DSC resource that always derives from OMI_BaseResource.
                 $schemaToProcess = $classesFromSchema | ForEach-Object -Process {
                     if(($_.CimSystemProperties.ClassName -ieq $keyword.ResourceName) -and ($_.CimSuperClassName -ieq 'OMI_BaseResource'))
                     {
-                        $_
+                        if ([ExperimentalFeature]::IsEnabled("PSDesiredStateConfiguration.InvokeDscResource"))
+                        {
+                            $_ | Add-Member -MemberType NoteProperty -Name 'ImplementationDetail' -Value $implementationDetail -PassThru
+                        }
+                        else
+                        {
+                            $_
+                        }
                     }
-                } 
-                if( $schemaToProcess -eq $null) 
+                }
+                if($null -eq  $schemaToProcess)
                 {
                     return
                 }
@@ -4105,6 +4167,7 @@ function GetResourceFromKeyword
     }
     else
     {
+        $implementationDetail = 'ClassBased'
         $Module = $modules | Where-Object -FilterScript {
             $_.Name -eq $keyword.ImplementingModule -and
             $_.Version -eq $keyword.ImplementingModuleVersion
@@ -4112,6 +4175,7 @@ function GetResourceFromKeyword
 
         if ($Module -and $Module.ExportedDscResources -contains $keyword.Keyword)
         {
+            $implementationDetail = 'ClassBased'
             $resource.Module = $Module
             $resource.Path = $Module.Path
             $resource.ParentPath = Split-Path -Path $Module.Path
@@ -4124,10 +4188,11 @@ function GetResourceFromKeyword
     }
     else
     {
+        $implementationDetail = $null
         $resource.ImplementedAs = [Microsoft.PowerShell.DesiredStateConfiguration.ImplementedAsType]::Binary
     }
 
-    if ($resource.Module -ne $null)
+    if ($null -ne $resource.Module)
     {
         $resource.CompanyName = $resource.Module.CompanyName
     }
@@ -4146,6 +4211,10 @@ function GetResourceFromKeyword
         Ascending  = $true
     }
     $resource.UpdateProperties($updatedProperties)
+    if ([ExperimentalFeature]::IsEnabled("PSDesiredStateConfiguration.InvokeDscResource"))
+    {
+        $resource | Add-Member -MemberType NoteProperty -Name 'ImplementationDetail' -Value $implementationDetail
+    }
 
     return $resource
 }
@@ -4155,10 +4224,11 @@ function GetResourceFromKeyword
 #
 function GetCompositeResource
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPositionalParameters", "", Scope="Function", Target="*")]
     [OutputType('Microsoft.PowerShell.DesiredStateConfiguration.DscResourceInfo')]
     param (
         [System.Management.Automation.WildcardPattern[]]
-        $patterns,        
+        $patterns,
         [Parameter(Mandatory)]
         [System.Management.Automation.ConfigurationInfo]
         $configInfo,
@@ -4174,7 +4244,7 @@ function GetCompositeResource
     {
         $message = $LocalizedData.ResourceNotMatched -f @($configInfo.Name)
         Write-Verbose -Message ($message)
-       
+
         return $null
     }
     else
@@ -4190,10 +4260,10 @@ function GetCompositeResource
     $resource.Name = $configInfo.Name
     $resource.ImplementedAs = [Microsoft.PowerShell.DesiredStateConfiguration.ImplementedAsType]::Composite
 
-    if ($configInfo.Module -ne $null)
+    if ($null -ne $configInfo.Module)
     {
         $resource.Module = GetModule $modules $configInfo.Module.Path
-        if($resource.Module -eq $null)
+        if($null -eq $resource.Module)
         {
             $resource.Module = $configInfo.Module
         }
@@ -4207,6 +4277,7 @@ function GetCompositeResource
         AddDscResourcePropertyFromMetadata $resource $_ $ignoreParameters
     }
 
+    $resource | Add-Member -MemberType NoteProperty -Name 'ImplementationDetail' -Value $null
     return $resource
 }
 
@@ -4224,8 +4295,8 @@ function AddDscResourceProperty
     )
 
     $convertTypeMap = @{
-        'MSFT_Credential'='[PSCredential]'; 
-        'MSFT_KeyValuePair'='[HashTable]'; 
+        'MSFT_Credential'='[PSCredential]';
+        'MSFT_KeyValuePair'='[HashTable]';
         'MSFT_KeyValuePair[]'='[HashTable]'
     }
 
@@ -4246,7 +4317,7 @@ function AddDscResourceProperty
         $Type = [System.Management.Automation.LanguagePrimitives]::ConvertTypeNameToPSTypeName($property.TypeConstraint)
     }
 
-    if ($property.ValueMap -ne $null)
+    if ($null -ne $property.ValueMap)
     {
         $property.ValueMap.Keys |
         Sort-Object |
@@ -4341,7 +4412,7 @@ function GetSyntax
 #
 function CheckResourceFound($names, $Resources)
 {
-    if ($names -eq $null)
+    if ($null -eq $names)
     {
         return
     }
@@ -4349,7 +4420,7 @@ function CheckResourceFound($names, $Resources)
     $namesWithoutWildcards = $names | Where-Object -FilterScript {
         [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($_) -eq $false
     }
-    
+
     foreach ($Name in $namesWithoutWildcards)
     {
         $foundResources = $Resources | Where-Object -FilterScript {
@@ -4404,11 +4475,11 @@ function GetModule
         $schemaFileName
     )
 
-    if($schemaFileName -eq $null)
+    if($null -eq $schemaFileName)
     {
         return $null
     }
-    
+
     $schemaFileExt = $null
     if ($schemaFileName -match '.schema.mof')
     {
@@ -4419,23 +4490,22 @@ function GetModule
     {
         $schemaFileExt = ".schema.psm1$"
     }
-    
+
     if(!$schemaFileExt)
     {
         return $null
     }
-    
-    # get module from parent directory. 
-    # Desired structure is : <Module-directory>/DSCResources/<schema file directory>/schema.File
+
+    # get module from parent directory.
+    # Desired structure is : <Module-directory>/DscResources/<schema file directory>/schema.File
     $validResource = $false
     $schemaDirectory = Split-Path $schemaFileName
     if($schemaDirectory)
     {
         $subDirectory = [System.IO.Directory]::GetParent($schemaDirectory)
 
-        if ($subDirectory -and ($subDirectory.Name -eq 'DSCResources') -and $subDirectory.Parent)
+        if ($subDirectory -and ($subDirectory.Name -eq 'DscResources') -and $subDirectory.Parent)
         {
-            $moduleDirectory = [System.IO.Directory]::GetParent($subDirectory)
             $results = $modules | Where-Object -FilterScript {
                 $_.ModuleBase -eq $subDirectory.Parent.FullName
             }
@@ -4484,26 +4554,26 @@ function IsHiddenResource
         [string]
         $ResourceName
     )
-        
+
     $hiddenResources = @(
-        'OMI_BaseResource', 
-        'MSFT_KeyValuePair', 
-        'MSFT_BaseConfigurationProviderRegistration', 
-        'MSFT_CimConfigurationProviderRegistration', 
-        'MSFT_PSConfigurationProviderRegistration', 
-        'OMI_ConfigurationDocument', 
-        'MSFT_Credential', 
-        'MSFT_DSCMetaConfiguration', 
-        'OMI_ConfigurationDownloadManager', 
-        'OMI_ResourceModuleManager', 
-        'OMI_ReportManager', 
-        'MSFT_FileDownloadManager', 
-        'MSFT_WebDownloadManager', 
-        'MSFT_FileResourceManager', 
-        'MSFT_WebResourceManager', 
-        'MSFT_WebReportManager', 
-        'OMI_MetaConfigurationResource', 
-        'MSFT_PartialConfiguration', 
+        'OMI_BaseResource',
+        'MSFT_KeyValuePair',
+        'MSFT_BaseConfigurationProviderRegistration',
+        'MSFT_CimConfigurationProviderRegistration',
+        'MSFT_PSConfigurationProviderRegistration',
+        'OMI_ConfigurationDocument',
+        'MSFT_Credential',
+        'MSFT_DSCMetaConfiguration',
+        'OMI_ConfigurationDownloadManager',
+        'OMI_ResourceModuleManager',
+        'OMI_ReportManager',
+        'MSFT_FileDownloadManager',
+        'MSFT_WebDownloadManager',
+        'MSFT_FileResourceManager',
+        'MSFT_WebResourceManager',
+        'MSFT_WebReportManager',
+        'OMI_MetaConfigurationResource',
+        'MSFT_PartialConfiguration',
         'MSFT_DSCMetaConfigurationV2'
     )
 
@@ -4518,12 +4588,12 @@ function GetPatterns
     [OutputType('System.Management.Automation.WildcardPattern[]')]
     param (
         [string[]]
-        $names       
+        $names
     )
 
     $patterns = @()
 
-    if ($names -eq $null)
+    if ($null -eq $names)
     {
         return $patterns
     }
@@ -4545,13 +4615,13 @@ function IsPatternMatched
     [OutputType('bool')]
     param (
         [System.Management.Automation.WildcardPattern[]]
-        $patterns, 
-        [Parameter(Mandatory)]       
+        $patterns,
+        [Parameter(Mandatory)]
         [string]
         $Name
     )
 
-    if ($patterns -eq $null)
+    if ($null -eq $patterns)
     {
         return $true
     }
@@ -4567,7 +4637,205 @@ function IsPatternMatched
     return $false
 }
 
-Export-ModuleMember -Function Get-DscResource
+Export-ModuleMember -Function Get-DscResource, Configuration
+
+function Invoke-DscResource
+{
+    [Experimental("PSDesiredStateConfiguration.InvokeDscResource", "Show")]
+    [CmdletBinding(HelpUri = '')]
+    param (
+        [Parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Name,
+        [Parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+        [ValidateNotNullOrEmpty()]
+        [Microsoft.PowerShell.Commands.ModuleSpecification]
+        $ModuleName,
+        [Parameter(Mandatory)]
+        [ValidateSet('Get','Set','Test')]
+        [string]
+        $Method,
+        [Parameter(Mandatory)]
+        [Hashtable]
+        $Property
+    )
+
+    $getArguments = @{
+        Name = $Name
+    }
+
+    if($Property.ContainsKey('PsDscRunAsCredential'))
+    {
+        $errorMessage = $LocalizedData.PsDscRunAsCredentialNotSupport -f $name
+        $exception = [System.ArgumentException]::new($errorMessage,'Name')
+        ThrowError -ExceptionName 'System.ArgumentException' -ExceptionMessage $errorMessage -ExceptionObject $exception -ErrorId 'PsDscRunAsCredentialNotSupport,Invoke-DscResource' -ErrorCategory InvalidArgument
+    }
+
+    if($ModuleName)
+    {
+        $getArguments.Add('Module',$ModuleName)
+    }
+
+    Write-Debug -Message "Getting DSC Resource $Name"
+    $resource = @(Get-DscResource @getArguments -ErrorAction stop)
+
+    if($resource.Count -eq 0)
+    {
+        throw "unexpected state - no resources found - get-dscresource should have thrown"
+    }
+
+    if($resource.Count -ne 1)
+    {
+        $errorMessage = $LocalizedData.InvalidResourceSpecification -f $name
+        $exception = [System.ArgumentException]::new($errorMessage,'Name')
+        ThrowError -ExceptionName 'System.ArgumentException' -ExceptionMessage $errorMessage -ExceptionObject $exception -ErrorId 'InvalidResourceSpecification,Invoke-DscResource' -ErrorCategory InvalidArgument
+    }
+
+    if ( @($resource.Properties | Where-Object { $_.PropertyType -eq '' }).Count -gt 0 -and ($IsMacOS -or $IsLinux)) {
+        Write-Warning -Message $LocalizedData.EmbeddedResourcesNotSupported
+    }
+
+    [Microsoft.PowerShell.DesiredStateConfiguration.DscResourceInfo] $resource = $resource[0]
+    if($resource.ImplementedAs -ne 'PowerShell')
+    {
+        $errorMessage = $LocalizedData.UnsupportedResourceImplementation -f $name, $resource.ImplementedAs
+        $exception = [System.InvalidOperationException]::new($errorMessage)
+        ThrowError -ExceptionName 'System.InvalidOperationException' -ExceptionMessage $errorMessage -ExceptionObject $exception -ErrorId 'UnsupportedResourceImplementation,Invoke-DscResource' -ErrorCategory InvalidOperation
+    }
+
+    $resourceInfo = $resource |out-string
+    Write-Debug $resourceInfo
+
+    if($resource.ImplementationDetail -eq 'ClassBased')
+    {
+        Invoke-DscClassBasedResource -Resource $resource -Method $Method -Property $Property
+    }
+    else
+    {
+        Invoke-DscScriptBasedResource -Resource $resource -Method $Method -Property $Property
+    }
+}
+
+# Class to return Test method results for Invoke-DscResource
+class InvokeDscResourceTestResult {
+    [bool] $InDesiredState
+}
+
+# Class to return Set method results for Invoke-DscResource
+class InvokeDscResourceSetResult {
+    [bool] $RebootRequired
+}
+
+function Invoke-DscClassBasedResource
+{
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalVars", "", Scope="Function")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "", Scope="Function")]
+    param(
+        [Parameter(Mandatory)]
+        [Microsoft.PowerShell.DesiredStateConfiguration.DscResourceInfo] $resource,
+        [Parameter(Mandatory)]
+        [ValidateSet('Get','Set','Test')]
+        [string]
+        $Method,
+        [Hashtable]
+        $Property
+    )
+
+    $path = $resource.Path
+    $type = $resource.ResourceType
+
+    Write-Debug "Importing $path ..."
+    $iss = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault2()
+    $powershell = [PowerShell]::Create($iss)
+    $script = @"
+using module $path
+
+Write-Host -Message ([$type]::new | out-string)
+return [$type]::new()
+"@
+
+
+    $null= $powershell.AddScript($script)
+    $dscType=$powershell.Invoke() | Select-object -First 1
+    foreach($key in $Property.Keys)
+    {
+        $value = $Property.$key
+        Write-Debug "Setting $key to $value"
+        $dscType.$key = $value
+    }
+    $info = $dscType | Out-String
+    Write-Debug $info
+
+    Write-Debug "calling $type.$Method() ..."
+    $global:DSCMachineStatus = $null
+    $output = $dscType.$Method()
+    return Get-InvokeDscResourceResult -Output $output -Method $Method
+}
+
+function Invoke-DscScriptBasedResource
+{
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalVars", "", Scope="Function")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "", Scope="Function")]
+    param(
+        [Parameter(Mandatory)]
+        [Microsoft.PowerShell.DesiredStateConfiguration.DscResourceInfo] $resource,
+        [Parameter(Mandatory)]
+        [ValidateSet('Get','Set','Test')]
+        [string]
+        $Method,
+        [Hashtable]
+        $Property
+    )
+
+    $path = $resource.Path
+    $type = $resource.ResourceType
+
+    Write-Debug "Importing $path ..."
+    Import-module -Scope Local -Name $path -Force -ErrorAction stop
+
+    $functionName = "$Method-TargetResource"
+
+    Write-Debug "calling $name\$functionName ..."
+    $global:DSCMachineStatus = $null
+    $output = & $type\$functionName @Property
+    return Get-InvokeDscResourceResult -Output $output -Method $Method
+}
+
+function Get-InvokeDscResourceResult
+{
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalVars", "", Scope="Function")]
+    param(
+        $Output,
+        $Method
+    )
+
+    switch($Method)
+    {
+        'Set' {
+            $Output | Foreach-Object -Process {
+                Write-Verbose -Message ('output: ' + $_)
+            }
+            $rebootRequired = if($global:DSCMachineStatus -eq 1) {$true} else {$false}
+            return [InvokeDscResourceSetResult]@{
+                RebootRequired = $rebootRequired
+            }
+        }
+        'Test' {
+            return [InvokeDscResourceTestResult]@{
+                InDesiredState = $Output
+            }
+        }
+        default {
+            return $Output
+        }
+    }
+}
+
+Export-ModuleMember -Function @(
+        'Invoke-DscResource'
+    )
+
 ###########################################################
 
 
@@ -4585,13 +4853,11 @@ New-Alias -Name 'ulcm' -Value 'Update-DscLocalConfigurationManager'
 New-Alias -Name 'upcfg' -Value 'Update-DSCConfiguration'
 New-Alias -Name 'gcfgs' -Value 'Get-DscConfigurationStatus'
 
-Export-ModuleMember -Alias * -Function *
-
 # SIG # Begin signature block
-# MIIjhwYJKoZIhvcNAQcCoIIjeDCCI3QCAQExDzANBglghkgBZQMEAgEFADB5Bgor
+# MIIjhgYJKoZIhvcNAQcCoIIjdzCCI3MCAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCDZ6V2W/jj6XPvM
-# Y7OyTFmnN9KDrQC6zbdffUZXSMXBuqCCDYUwggYDMIID66ADAgECAhMzAAABUptA
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCCmTp/swC0JRSat
+# hU6YlQWrW6nkdCfIQQRYV4e65g1liqCCDYUwggYDMIID66ADAgECAhMzAAABUptA
 # n1BWmXWIAAAAAAFSMA0GCSqGSIb3DQEBCwUAMH4xCzAJBgNVBAYTAlVTMRMwEQYD
 # VQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNy
 # b3NvZnQgQ29ycG9yYXRpb24xKDAmBgNVBAMTH01pY3Jvc29mdCBDb2RlIFNpZ25p
@@ -4663,55 +4929,55 @@ Export-ModuleMember -Alias * -Function *
 # BL7fQccOKO7eZS/sl/ahXJbYANahRr1Z85elCUtIEJmAH9AAKcWxm6U/RXceNcbS
 # oqKfenoi+kiVH6v7RyOA9Z74v2u3S5fi63V4GuzqN5l5GEv/1rMjaHXmr/r8i+sL
 # gOppO6/8MO0ETI7f33VtY5E90Z1WTk+/gFcioXgRMiF670EKsT/7qMykXcGhiJtX
-# cVZOSEXAQsmbdlsKgEhr/Xmfwb1tbWrJUnMTDXpQzTGCFVgwghVUAgEBMIGVMH4x
+# cVZOSEXAQsmbdlsKgEhr/Xmfwb1tbWrJUnMTDXpQzTGCFVcwghVTAgEBMIGVMH4x
 # CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRt
 # b25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xKDAmBgNVBAMTH01p
 # Y3Jvc29mdCBDb2RlIFNpZ25pbmcgUENBIDIwMTECEzMAAAFSm0CfUFaZdYgAAAAA
 # AVIwDQYJYIZIAWUDBAIBBQCgga4wGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQw
-# HAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEIKD4
-# lYTwV5KAw8JJC327IPfw6yvr4kxHEaNnu+U6LWunMEIGCisGAQQBgjcCAQwxNDAy
+# HAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEIFle
+# CTd2ofC2rcuPoFQIePlFkYpr3xmx7zR+tGLYZiY7MEIGCisGAQQBgjcCAQwxNDAy
 # oBSAEgBNAGkAYwByAG8AcwBvAGYAdKEagBhodHRwOi8vd3d3Lm1pY3Jvc29mdC5j
-# b20wDQYJKoZIhvcNAQEBBQAEggEANrdvjHGz1nvvzKdrSmzSYHn6zKUDZgkS0dXX
-# Qf+TLLeE3WGyZu99nAHh/QFYsNpJP+iKWE+mcuNoT5vTQLVSNm+7PLk6RW4uW/ir
-# HmFgapS9ABxs86p9iWbpBkMkLSD6v0UQvugclNVlOlE4G5qSRHufeKCUqCRszQG/
-# nRRE7H7RZ49LPd34d8OES1PaDxMkcOQo2feg6XEMPJntXo4OexOmVxtQ/knrCr0x
-# /fKB17sOLdCGYUVF+eF4FRdiMD0Jwm/LLv26U08Wn2HCOKaAo39b8sqFRqDoUVM3
-# LoRMQYuyC6dqnYxc2a/nw82puNYrhJ29BBVEGZZ8oGmi71wzyaGCEuIwghLeBgor
-# BgEEAYI3AwMBMYISzjCCEsoGCSqGSIb3DQEHAqCCErswghK3AgEDMQ8wDQYJYIZI
+# b20wDQYJKoZIhvcNAQEBBQAEggEAcEEQSDrgqa0o+UJuJOJtMz68eEy44yJ2IP5r
+# bGjILUkg1lLACbjqbcDHSwvNGad6vEI7n2e4zVhLMjGloIHNLU74aczf203i2KIm
+# mANcPB7f/BQhp7+phIZOA9dzp+XMFhGap/ihEoh2n9q56rLFQnk4UPJHtHmP7tpD
+# aOFd5LbUGb4C9Qbc5H6jDQXTUEkDi7ulefLc+B0quoewyi2eRyj+9pwRPXk8bCjL
+# qVYzTyGOwz+cTFBQ88iCB71oSIDVy+1rvi86iz3WJN4xU2sRgi8D8DMw4BbegMH1
+# BoxjZ3dXibhfuswY2FoBs6fbDxS6YjG2SdiMZxFLMWrUQ4kvJKGCEuEwghLdBgor
+# BgEEAYI3AwMBMYISzTCCEskGCSqGSIb3DQEHAqCCErowghK2AgEDMQ8wDQYJYIZI
 # AWUDBAIBBQAwggFRBgsqhkiG9w0BCRABBKCCAUAEggE8MIIBOAIBAQYKKwYBBAGE
-# WQoDATAxMA0GCWCGSAFlAwQCAQUABCCl8YWT0e1EagXd0+VeJ8MOr2bvU95BcHjr
-# 1nKaCLMiNAIGXfwpasNnGBMyMDIwMDEyMzAxMzYyMi40NTJaMASAAgH0oIHQpIHN
-# MIHKMQswCQYDVQQGEwJVUzELMAkGA1UECBMCV0ExEDAOBgNVBAcTB1JlZG1vbmQx
-# HjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEtMCsGA1UECxMkTWljcm9z
-# b2Z0IElyZWxhbmQgT3BlcmF0aW9ucyBMaW1pdGVkMSYwJAYDVQQLEx1UaGFsZXMg
-# VFNTIEVTTjpGRjA2LTRCQzMtQjlEQTElMCMGA1UEAxMcTWljcm9zb2Z0IFRpbWUt
-# U3RhbXAgU2VydmljZaCCDjkwggTxMIID2aADAgECAhMzAAABFDUnReq2yGxPAAAA
-# AAEUMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNo
+# WQoDATAxMA0GCWCGSAFlAwQCAQUABCDcbIrH5FtSE9fLx2CzYcc+Ud0mx7m0Pe6O
+# 4aGqj8ZKQQIGXfuPdIH6GBMyMDE5MTIxOTE4NDIxNi40ODJaMASAAgH0oIHQpIHN
+# MIHKMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMH
+# UmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSUwIwYDVQQL
+# ExxNaWNyb3NvZnQgQW1lcmljYSBPcGVyYXRpb25zMSYwJAYDVQQLEx1UaGFsZXMg
+# VFNTIEVTTjo3QkYxLUUzRUEtQjgwODElMCMGA1UEAxMcTWljcm9zb2Z0IFRpbWUt
+# U3RhbXAgU2VydmljZaCCDjgwggTxMIID2aADAgECAhMzAAABH04lzawK9LgfAAAA
+# AAEfMA0GCSqGSIb3DQEBCwUAMHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNo
 # aW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29y
 # cG9yYXRpb24xJjAkBgNVBAMTHU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBDQSAyMDEw
-# MB4XDTE5MTAyMzIzMTkzN1oXDTIxMDEyMTIzMTkzN1owgcoxCzAJBgNVBAYTAlVT
-# MQswCQYDVQQIEwJXQTEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9z
-# b2Z0IENvcnBvcmF0aW9uMS0wKwYDVQQLEyRNaWNyb3NvZnQgSXJlbGFuZCBPcGVy
-# YXRpb25zIExpbWl0ZWQxJjAkBgNVBAsTHVRoYWxlcyBUU1MgRVNOOkZGMDYtNEJD
-# My1COURBMSUwIwYDVQQDExxNaWNyb3NvZnQgVGltZS1TdGFtcCBTZXJ2aWNlMIIB
-# IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnb4tJPPEtXZAq9EW/VYMLbNQ
-# mlb1o4uI/GeqCbXqPe8ZolT0G7FxGyOwfEhFC6XbE8Zy6VpZNJXxmsgS2+pqsGMq
-# kvntYkpJJeqTnRbodNLH4x5jhoSocMNk8seDaaBwZwHP6my+GAEwp1a8sGAzs7Nu
-# 5uuzL5Si4i/Sh6L3xta+xR88qdbWykIXLSVpPEBMEj1GRmbeTA06XdQ4dc+c1UNo
-# M9gOSEwb1TFjqDWNy+nKP/TVYOBaBq1PQk+Oa21/Hdsfg0Vy0pblTZ+QmLHv3xIU
-# Va2TulIjCmDH0xbDVpOYH/9AX6+SDAqXynQJbXc3DI6htvjnw8FERjSZm3yM/wID
-# AQABo4IBGzCCARcwHQYDVR0OBBYEFFBUj3Dm/oSTdyxGp1ll3COLiTwCMB8GA1Ud
+# MB4XDTE5MTExMzIxNDA0MVoXDTIxMDIxMTIxNDA0MVowgcoxCzAJBgNVBAYTAlVT
+# MRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQK
+# ExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xJTAjBgNVBAsTHE1pY3Jvc29mdCBBbWVy
+# aWNhIE9wZXJhdGlvbnMxJjAkBgNVBAsTHVRoYWxlcyBUU1MgRVNOOjdCRjEtRTNF
+# QS1CODA4MSUwIwYDVQQDExxNaWNyb3NvZnQgVGltZS1TdGFtcCBTZXJ2aWNlMIIB
+# IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApUwPzFb3PxyMf046MLWFCtFw
+# lCpzu1wPi26cp0QYxa19ybbPnDF+1xljQ1p6pXj+hPLTQIgsV/xLAnDoKnRGmq37
+# L4eSVSXgMmCTDaZLZUwJi3DysQgdCX8uwo+cnlfGfFCZ0OzTIVgjt4wa1oWtqkg0
+# eJ+/h4CeiGfdSfrz9Ds9o/zn8VWpfzscW7vHFjAmT3XkATl3Z1UIVxibSDhOGS+f
+# NEb8twd24Rn+qBpitRqVLbJGfLakIMj9cORXXhvYWGyCQfyuPmWPKaQ194iZiqWL
+# /s/9CWW5+381++7ORa9aqtOmDyRCTVDvGtLTIZnsA/WID7SQVxXgq8u5YtsIswID
+# AQABo4IBGzCCARcwHQYDVR0OBBYEFBWjHwA6MBNjBDdlIlsrwTaJ+uDAMB8GA1Ud
 # IwQYMBaAFNVjOlyKMZDzQ3t8RhvFM2hahW1VMFYGA1UdHwRPME0wS6BJoEeGRWh0
 # dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY1RpbVN0
 # YVBDQV8yMDEwLTA3LTAxLmNybDBaBggrBgEFBQcBAQROMEwwSgYIKwYBBQUHMAKG
 # Pmh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljVGltU3RhUENB
 # XzIwMTAtMDctMDEuY3J0MAwGA1UdEwEB/wQCMAAwEwYDVR0lBAwwCgYIKwYBBQUH
-# AwgwDQYJKoZIhvcNAQELBQADggEBABkijDX3OAfH6zPQG4vuGKrcpzx/EPBqaWZb
-# oUdAB95jxFD34ilhjOJ8Vqq/VYCSBZoAoeYZv7LLYRjR6Z8FQ1h3t/O8oVzCBRWn
-# 4WSanxZzpNNpneWyurDVUE3YKtaVvxO5RCGlhUxPjvFpDWIPoWRLpwORvs32pvnT
-# tYBNIHjN9N5BpEuT7GxkXZ4asXXRPtEv/qoYAundjb7tDWFN83PVhecKe3rEXGAg
-# ic/jg06z3nGy7WsGNLuxMHpSPnlMe+oxYPPhK+8flEnQDw4R3hiyLSNJw3/c8sRa
-# 87woamjZ22xxSvJJAqlWW/ue9AgSUz+hz1G5QP0DfK6oZ6ZU5xowggZxMIIEWaAD
+# AwgwDQYJKoZIhvcNAQELBQADggEBAJjRR8DcZOLKYqvJzonPUcQsC9l/Pwu94Mv+
+# 7l8X1BW2+zKEqADT9ogJD3Op7cAg3x3x6baEL6qw4hwOCU3dWUEmxAS6hO6Wd8Fd
+# i/oUZlM4qesCiX91DZ5P9xXiEDz1UXQxbZkY/KgegJAI4COyQItpLylGgmmx58X1
+# y5gYUUmlzEHYwCe3UYLCm6AE2qN+/TQ51hylim7BNR6s2wqIEJgFLGy11ZgSJOi5
+# tQ5BqLOh+wItYRqroZR0QINNTZ0+KV0qymbanYqIMifGbc5M9fNc+f2RNnG4MZvM
+# AfsIUVlq/3MhrWN/kDKgvt7vx0LI/Ofg1lcFPFPjwfuKzYtqbEQwggZxMIIEWaAD
 # AgECAgphCYEqAAAAAAACMA0GCSqGSIb3DQEBCwUAMIGIMQswCQYDVQQGEwJVUzET
 # MBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMV
 # TWljcm9zb2Z0IENvcnBvcmF0aW9uMTIwMAYDVQQDEylNaWNyb3NvZnQgUm9vdCBD
@@ -4746,36 +5012,36 @@ Export-ModuleMember -Alias * -Function *
 # uIUBHoD7G4kqVDmyW9rIDVWZeodzOwjmmC3qjeAzLhIp9cAvVCch98isTtoouLGp
 # 25ayp0Kiyc8ZQU3ghvkqmqMRZjDTu3QyS99je/WZii8bxyGvWbWu3EQ8l1Bx16HS
 # xVXjad5XwdHeMMD9zOZN+w2/XU/pnR4ZOC+8z1gFLu8NoFA12u8JJxzVs341Hgi6
-# 2jbb01+P3nSISRKhggLLMIICNAIBATCB+KGB0KSBzTCByjELMAkGA1UEBhMCVVMx
-# CzAJBgNVBAgTAldBMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3Nv
-# ZnQgQ29ycG9yYXRpb24xLTArBgNVBAsTJE1pY3Jvc29mdCBJcmVsYW5kIE9wZXJh
-# dGlvbnMgTGltaXRlZDEmMCQGA1UECxMdVGhhbGVzIFRTUyBFU046RkYwNi00QkMz
-# LUI5REExJTAjBgNVBAMTHE1pY3Jvc29mdCBUaW1lLVN0YW1wIFNlcnZpY2WiIwoB
-# ATAHBgUrDgMCGgMVAOAE5JdEE7t7hQJlUfqajjwui+BnoIGDMIGApH4wfDELMAkG
+# 2jbb01+P3nSISRKhggLKMIICMwIBATCB+KGB0KSBzTCByjELMAkGA1UEBhMCVVMx
+# EzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoT
+# FU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjElMCMGA1UECxMcTWljcm9zb2Z0IEFtZXJp
+# Y2EgT3BlcmF0aW9uczEmMCQGA1UECxMdVGhhbGVzIFRTUyBFU046N0JGMS1FM0VB
+# LUI4MDgxJTAjBgNVBAMTHE1pY3Jvc29mdCBUaW1lLVN0YW1wIFNlcnZpY2WiIwoB
+# ATAHBgUrDgMCGgMVANQvRJa2WvwYqkrR2BYDDosSXkkMoIGDMIGApH4wfDELMAkG
 # A1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQx
 # HjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEmMCQGA1UEAxMdTWljcm9z
-# b2Z0IFRpbWUtU3RhbXAgUENBIDIwMTAwDQYJKoZIhvcNAQEFBQACBQDh0tHDMCIY
-# DzIwMjAwMTIyMjE1MDU5WhgPMjAyMDAxMjMyMTUwNTlaMHQwOgYKKwYBBAGEWQoE
-# ATEsMCowCgIFAOHS0cMCAQAwBwIBAAICGzgwBwIBAAICEfcwCgIFAOHUI0MCAQAw
-# NgYKKwYBBAGEWQoEAjEoMCYwDAYKKwYBBAGEWQoDAqAKMAgCAQACAwehIKEKMAgC
-# AQACAwGGoDANBgkqhkiG9w0BAQUFAAOBgQC5RgCvhfJxtgba8m/4QGphpZf22Kvi
-# 3uMmnlnk28DYjeWIuXjlPdm0oS5o44ALvprH2FphelOVATK5w0m8J7exdvQU2FpU
-# DJZ1ABKwssskmKnT4jlgBCAJdTyDNfQ/nPXWVfcXgtZSzsJ2mLE2758b02jOo8lK
-# wCEyT+MrKbXfMTGCAw0wggMJAgEBMIGTMHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQI
-# EwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3Nv
-# ZnQgQ29ycG9yYXRpb24xJjAkBgNVBAMTHU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBD
-# QSAyMDEwAhMzAAABFDUnReq2yGxPAAAAAAEUMA0GCWCGSAFlAwQCAQUAoIIBSjAa
-# BgkqhkiG9w0BCQMxDQYLKoZIhvcNAQkQAQQwLwYJKoZIhvcNAQkEMSIEIMZyASIt
-# 6/kKCcXUpSph2PRuiTA7EqwyM0W18metwAXaMIH6BgsqhkiG9w0BCRACLzGB6jCB
-# 5zCB5DCBvQQgTBF/redFTBj0EFxLBVnxgYvIGrepiEu41fS8+a3N6zowgZgwgYCk
-# fjB8MQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMH
-# UmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSYwJAYDVQQD
-# Ex1NaWNyb3NvZnQgVGltZS1TdGFtcCBQQ0EgMjAxMAITMwAAARQ1J0XqtshsTwAA
-# AAABFDAiBCBmMefm7r2gHO7ITQ13j0f3JdwMokUWvPwqWD4NGLH63zANBgkqhkiG
-# 9w0BAQsFAASCAQBQGtxoRkEUoPgaR/io8SCS5Jneogx+ylmoboVt0lVUHGQyVqlX
-# DL2BWqxYPTCpEV1Jg3piNWibUYCJpm4sFVpJYql1hIuoIAdk9av271W9asTx9Xc2
-# zsaMFDD+ElxVVQhSwN764H0TMCuAydRJU/MD1Ivg+Ul/105guoP+ZDqnIP7x9MHF
-# fZFOnaNsAB0WQLMj9rOy0lS07u4xmBGv1EjT+embXb5gLEiRMCAbLGKwLXqps0Xi
-# eeEm3yE/qo6PMVfsvaJJe3tYgUBtwdVNjPWMfeXbaBQlFoAqPcKjPld9ql4KkL5d
-# S7xcEIRli+DQVRbs2SW2SSCKSnLtRDUpgOMJ
+# b2Z0IFRpbWUtU3RhbXAgUENBIDIwMTAwDQYJKoZIhvcNAQEFBQACBQDhpg31MCIY
+# DzIwMTkxMjE5MjI1NTQ5WhgPMjAxOTEyMjAyMjU1NDlaMHMwOQYKKwYBBAGEWQoE
+# ATErMCkwCgIFAOGmDfUCAQAwBgIBAAIBAzAHAgEAAgIR2DAKAgUA4adfdQIBADA2
+# BgorBgEEAYRZCgQCMSgwJjAMBgorBgEEAYRZCgMCoAowCAIBAAIDB6EgoQowCAIB
+# AAIDAYagMA0GCSqGSIb3DQEBBQUAA4GBAIYziL8BssSJ6KC8xSwqsgfE7ljWQWnf
+# ueR/yxZFVuwpI3YDpngLozjxRRcbh/p/O+Edk5kgGc/LQSvkH7LztUoc3KnMS7Eq
+# jvBeujrT+lXUCj5KWPZYWz1lW64j9cvVT5fp44k6SznLGABMpgQh9uHX76G1TM+1
+# KvG2RlOf6MtgMYIDDTCCAwkCAQEwgZMwfDELMAkGA1UEBhMCVVMxEzARBgNVBAgT
+# Cldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29m
+# dCBDb3Jwb3JhdGlvbjEmMCQGA1UEAxMdTWljcm9zb2Z0IFRpbWUtU3RhbXAgUENB
+# IDIwMTACEzMAAAEfTiXNrAr0uB8AAAAAAR8wDQYJYIZIAWUDBAIBBQCgggFKMBoG
+# CSqGSIb3DQEJAzENBgsqhkiG9w0BCRABBDAvBgkqhkiG9w0BCQQxIgQgGYqz0Dq9
+# YqqRZxXfhhPJWb+HOIveJnDzFkYx4gFK05swgfoGCyqGSIb3DQEJEAIvMYHqMIHn
+# MIHkMIG9BCCqpXD3AFt/+Tv/03FY5+PR4QgtJyYHI0TVft9WwT6DpTCBmDCBgKR+
+# MHwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdS
+# ZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xJjAkBgNVBAMT
+# HU1pY3Jvc29mdCBUaW1lLVN0YW1wIFBDQSAyMDEwAhMzAAABH04lzawK9LgfAAAA
+# AAEfMCIEIMyyd/Ju2tgm3LTjCVuPVdILYf2XV39SZYXt+eRn+V0PMA0GCSqGSIb3
+# DQEBCwUABIIBABT8qjag/9CktRS56NJI3tJPAd1vtQOn6ePPJg25rXI8DZaflNsp
+# /Fc93IT5Lo0SI9T/9b1Pz8743cxvUxXJPjUCmBqtOPW3HyBmSWa0hYFsE2EitwqL
+# WTz1mj/m67XSv3Oza1GRKENdep/DUbpJsKBz4Yf4/m2xUkIntFOBm399zI2hqu4t
+# b3fk9XPffk7k4uJ0FOcRs68rbEiV9eOzuyDaoQx0jFBjr/0m1V4AOUx2ILi7zz0I
+# UHc9yexaFTaEuejfSX+n8P09vtBg1yukmEfU/SglflnPuPYbmsy5fqnG2UQ6F+YF
+# n86nTpW5hoZyey6KUQbNU2pwp6+zAcQ0XE0=
 # SIG # End signature block

@@ -668,6 +668,62 @@
             Clears the properties of an item at the specified path.
             </summary>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.ClearRecycleBinCommand">
+            <summary>
+            Defines the implementation of the 'Clear-RecycleBin' cmdlet.
+            This cmdlet clear all files in the RecycleBin for the given DriveLetter.
+            If not DriveLetter is specified, then the RecycleBin for all drives are cleared.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.DriveLetter">
+            <summary>
+            Property that sets DriveLetter parameter.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.Force">
+            <summary>
+            Property that sets force parameter. This will allow to clear the recyclebin.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.BeginProcessing">
+            <summary>
+            This method implements the BeginProcessing method for Clear-RecycleBin command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.ProcessRecord">
+            <summary>
+            This method implements the ProcessRecord method for Clear-RecycleBin command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.ValidDrivePath(System.String)">
+            <summary>
+            Returns true if the given drive is 'fixed' and its path exist; otherwise, return false.
+            </summary>
+            <param name="drivePath"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.IsValidPattern(System.String)">
+            <summary>
+            Returns true if the given input is of the form c, c:, c:\, C, C: or C:\
+            </summary>
+            <param name="input"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.GetDrivePath(System.String)">
+            <summary>
+            Returns a drive path of the form C:\ for the given drive driveName.
+            Supports the following inputs: C, C:, C:\
+            </summary>
+            <param name="driveName"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.ClearRecycleBinCommand.EmptyRecycleBin(System.String)">
+            <summary>
+            Clear the recyclebin for the given drive name.
+            If no driveName is provided, it clears the recyclebin for all drives.
+            </summary>
+            <param name="drivePath"></param>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.JoinPathCommand">
             <summary>
             A command that adds the parent and child parts of a path together
@@ -1681,9 +1737,31 @@
             The main execution method for the get-childitem command.
             </summary>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.GetClipboardCommand">
+            <summary>
+            Defines the implementation of the 'Get-Clipboard' cmdlet.
+            This cmdlet get the content from system clipboard.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetClipboardCommand.Raw">
+            <summary>
+            Property that sets raw parameter. This will allow clipboard return text or file list as one string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetClipboardCommand.BeginProcessing">
+            <summary>
+            This method implements the ProcessRecord method for Get-Clipboard command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetClipboardCommand.GetClipboardContentAsText">
+            <summary>
+            Returns the clipboard content as text format.
+            </summary>
+            <returns>Array of strings representing content from clipboard.</returns>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.GetComputerInfoCommand">
             <summary>
-            The Get=ComputerInfo cmdlet gathers and reports information
+            The Get-ComputerInfo cmdlet gathers and reports information
             about a computer.
             </summary>
         </member>
@@ -1917,7 +1995,7 @@
             will fail to parse due to the "0x" base-indication prefix.
             </remarks>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.Conversion.MakeLocale(System.String)">
+        <member name="M:Microsoft.PowerShell.Commands.Conversion.GetLocaleName(System.String)">
             <summary>
             Attempt to create a <see cref="T:System.Globalization.CultureInfo"/>
             object from a locale string as retrieved from WMI.
@@ -1987,7 +2065,7 @@
             <summary>
             Get a language name from a language identifier.
             </summary>
-            <param name="language">
+            <param name="lcid">
             A nullable integer containing the language ID for the desired language.
             </param>
             <returns>
@@ -4987,16 +5065,6 @@
             </param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.Native.LCIDToLocaleName(System.UInt32,System.Text.StringBuilder,System.Int32,System.Int32)">
-            <summary>
-            Convert a Local Identifier to a Locale name.
-            </summary>
-            <param name="localeID">The Locale ID (LCID) to be converted.</param>
-            <param name="localeName">Destination of the Locale name.</param>
-            <param name="localeNameSize">Capacity of <paramref name="localeName"/></param>
-            <param name="flags"></param>
-            <returns></returns>
-        </member>
         <member name="M:Microsoft.PowerShell.Commands.Native.SLGetWindowsInformationDWORD(System.String,System.Int32@)">
             <summary>
             Gets the data specified for the passed in property name from the
@@ -5169,6 +5237,57 @@
             <summary>
             Gets the values of the properties of an item at the specified path.
             </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.GetHotFixCommand">
+            <summary>
+            Cmdlet for Get-Hotfix Proxy.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetHotFixCommand.Id">
+            <summary>
+            Specifies the HotFixID. Unique identifier associated with a particular update.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetHotFixCommand.Description">
+            <summary>
+            To search on description of Hotfixes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetHotFixCommand.ComputerName">
+            <summary>
+            Parameter to pass the Computer Name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.GetHotFixCommand.Credential">
+            <summary>
+            Parameter to pass the Credentials.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetHotFixCommand.BeginProcessing">
+            <summary>
+            Sets connection options.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetHotFixCommand.ProcessRecord">
+            <summary>
+            Get the List of HotFixes installed on the Local Machine.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetHotFixCommand.StopProcessing">
+            <summary>
+            To implement ^C.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetHotFixCommand.Dispose">
+            <summary>
+            Dispose Method.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.GetHotFixCommand.Dispose(System.Boolean)">
+            <summary>
+            Dispose Method.
+            </summary>
+            <param name="disposing"></param>
         </member>
         <member name="T:Microsoft.PowerShell.Commands.MoveItemPropertyCommand">
             <summary>
@@ -5430,7 +5549,7 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetLocationCommand.LiteralPath">
             <summary>
-            Gets or sets the path path property, when bound from the pipeline.
+            Gets or sets the path property, when bound from the pipeline.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetLocationCommand.PassThru">
@@ -7938,7 +8057,7 @@
             <param name="waitForServiceToStop"></param>
             <returns>True iff the service was stopped.</returns>
         </member>
-        <member name="M:Microsoft.PowerShell.Commands.ServiceOperationBaseCommand.HaveAllDependentServicesStopped(System.Collections.Generic.ICollection{System.ServiceProcess.ServiceController})">
+        <member name="M:Microsoft.PowerShell.Commands.ServiceOperationBaseCommand.HaveAllDependentServicesStopped(System.ServiceProcess.ServiceController[])">
             <summary>
             Check if all dependent services are stopped.
             </summary>
@@ -8090,10 +8209,16 @@
         <member name="P:Microsoft.PowerShell.Commands.SetServiceCommand.StartupType">
             <summary>
             The following is the definition of the input parameter "StartupType".
+            "Set-Service -StartType" sets ServiceController.InputObject.StartType.
             Changes the starting mode of the service. Valid values for StartupType are:
             -- Automatic: Start when the system starts.
             -- Manual   : Starts only when started by a user or program.
             -- Disabled : Can.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.SetServiceCommand.SecurityDescriptorSddl">
+            <summary>
+            Sets the SecurityDescriptorSddl of the service using a SDDL string.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.SetServiceCommand.Status">
@@ -8130,7 +8255,7 @@
         </member>
         <member name="T:Microsoft.PowerShell.Commands.NewServiceCommand">
             <summary>
-            This class implements the set-service command.
+            This class implements the New-Service command.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.NewServiceCommand.Name">
@@ -8168,6 +8293,11 @@
             Account under which the service should run.
             </summary>
             <value></value>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.NewServiceCommand.SecurityDescriptorSddl">
+            <summary>
+            Sets the SecurityDescriptorSddl of the service using a SDDL string.
+            </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.NewServiceCommand.DependsOn">
             <summary>
@@ -8340,6 +8470,44 @@
         <member name="F:Microsoft.PowerShell.Commands.ServiceStartupType.AutomaticDelayedStart">
             <summary>Automatic (Delayed Start) service</summary>
         </member>
+        <member name="T:Microsoft.PowerShell.Commands.SetClipboardCommand">
+            <summary>
+            Defines the implementation of the 'Set-Clipboard' cmdlet.
+            This cmdlet gets the content from system clipboard.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.SetClipboardCommand.Value">
+            <summary>
+            Property that sets clipboard content.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.SetClipboardCommand.Append">
+            <summary>
+            Property that sets append parameter. This will allow to append clipboard without clear it.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.SetClipboardCommand.BeginProcessing">
+            <summary>
+            This method implements the BeginProcessing method for Set-Clipboard command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.SetClipboardCommand.ProcessRecord">
+            <summary>
+            This method implements the ProcessRecord method for Set-Clipboard command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.SetClipboardCommand.EndProcessing">
+            <summary>
+            This method implements the EndProcessing method for Set-Clipboard command.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.SetClipboardCommand.SetClipboardContent(System.Collections.Generic.List{System.String},System.Boolean)">
+            <summary>
+            Set the clipboard content.
+            </summary>
+            <param name="contentList">The content to store into the clipboard.</param>
+            <param name="append">If true, appends to clipboard instead of overwriting.</param>
+        </member>
         <member name="T:Microsoft.PowerShell.Commands.SetContentCommand">
             <summary>
             A command to set the content of an item at a specified path.
@@ -8428,107 +8596,109 @@
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Ping">
             <summary>
-            Do ping test.
+            Gets or sets whether to do ping test.
+            Default is true.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.IPv4">
             <summary>
-            Force using IPv4 protocol.
+            Gets or sets whether to force use of IPv4 protocol.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.IPv6">
             <summary>
-            Force using IPv6 protocol.
+            Gets or sets whether to force use of IPv6 protocol.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.ResolveDestination">
             <summary>
-            Do reverse DNS lookup to get names for IP addresses.
+            Gets or sets whether to do reverse DNS lookup to get names for IP addresses.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Source">
             <summary>
-            Source from which to do a test (ping, trace route, ...).
-            The default is Local Host.
+            Gets the source from which to run the selected test.
+            The default is localhost.
             Remoting is not yet implemented internally in the cmdlet.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.MaxHops">
             <summary>
-            The number of times the Ping data packets can be forwarded by routers.
-            As gateways and routers transmit packets through a network,
-            they decrement the Time-to-Live (TTL) value found in the packet header.
+            Gets or sets the number of times the Ping data packets can be forwarded by routers.
+            As gateways and routers transmit packets through a network, they decrement the Time-to-Live (TTL)
+            value found in the packet header.
             The default (from Windows) is 128 hops.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Count">
             <summary>
-            Count of attempts.
+            Gets or sets the number of ping attempts.
             The default (from Windows) is 4 times.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Delay">
             <summary>
-            Delay between attempts.
+            Gets or sets the delay between ping attempts.
             The default (from Windows) is 1 second.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.BufferSize">
             <summary>
-            Buffer size to send.
-            The default (from Windows) is 32 bites.
-            Max value is 65500 (limit from Windows API).
+            Gets or sets the buffer size to send with the ping packet.
+            The default (from Windows) is 32 bytes.
+            Max value is 65500 (limitation imposed by Windows API).
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.DontFragment">
             <summary>
-            Don't fragment ICMP packages.
+            Gets or sets whether to prevent fragmentation of the ICMP packets.
             Currently CoreFX not supports this on Unix.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Continues">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Repeat">
             <summary>
-            Continue ping until user press Ctrl-C
-            or Int.MaxValue threshold reached.
+            Gets or sets whether to continue pinging until user presses Ctrl-C (or Int.MaxValue threshold reached).
             </summary>
         </member>
-        <member name="F:Microsoft.PowerShell.Commands.TestConnectionCommand.Quiet">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Quiet">
             <summary>
-            Set short output kind ('bool' for Ping, 'int' for MTU size ...).
-            Default is to return typed result object(s).
+            Gets or sets whether to enable quiet output mode, reducing output to a single simple value only.
+            By default, PingStatus, PingMtuStatus, or TraceStatus objects are emitted.
+            With this switch, standard ping and -Traceroute returns only true / false, and -MtuSize returns an integer.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TimeoutSeconds">
             <summary>
-            Time-out value in seconds.
+            Gets or sets the timeout value for an individual ping in seconds.
             If a response is not received in this time, no response is assumed.
-            It is not the cmdlet timeout! It is a timeout for waiting one ping response.
-            The default (from Windows) is 5 second.
+            The default (from Windows) is 5 seconds.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TargetName">
             <summary>
-            Destination - computer name or IP address.
+            Gets or sets the destination hostname or IP address.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.MTUSizeDetect">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.MtuSize">
             <summary>
-            Detect MTU size.
+            Gets or sets whether to detect Maximum Transmission Unit size.
+            When selected, only a single ping result is returned, indicating the maximum buffer size
+            the route to the destination can support without fragmenting the ICMP packets.
             </summary>
         </member>
         <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.Traceroute">
             <summary>
-            Do traceroute test.
+            Gets or sets whether to perform a traceroute test.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TCPPort">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TcpPort">
             <summary>
-            Do tcp connection test.
+            Gets or sets whether to perform a TCP connection test.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.BeginProcessing">
             <summary>
-            Init the cmdlet.
+            BeginProcessing implementation for TestConnectionCommand.
             </summary>
         </member>
         <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.ProcessRecord">
@@ -8536,77 +8706,187 @@
             Process a connection test.
             </summary>
         </member>
-        <member name="T:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteReply">
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.StopProcessing">
+            <summary>
+            On receiving the StopProcessing() request, the cmdlet will immediately cancel any in-progress ping request.
+            This allows a cancellation to occur during a ping request without having to wait for the timeout.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.Dispose">
+            <summary>
+            IDisposable implementation, dispose of any disposable resources created by the cmdlet.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.Dispose(System.Boolean)">
+            <summary>
+            Implementation of IDisposable for both manual Dispose() and finalizer-called disposal of resources.
+            </summary>
+            <param name="disposing">
+            Specified as true when Dispose() was called, false if this is called from the finalizer.
+            </param>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus">
+            <summary>
+            The class contains information about the source, the destination and ping results.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.#ctor(System.String,System.String,System.Net.NetworkInformation.PingReply,System.Int64,System.Int32,System.UInt32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus"/> class.
+            This constructor allows manually specifying the initial values for the cases where the PingReply
+            object may be missing some information, specifically in the instances where PingReply objects are
+            utilised to perform a traceroute.
+            </summary>
+            <param name="source">The source machine name or IP of the ping.</param>
+            <param name="destination">The destination machine name of the ping.</param>
+            <param name="reply">The response from the ping attempt.</param>
+            <param name="latency">The latency of the ping.</param>
+            <param name="bufferSize">The buffer size.</param>
+            <param name="pingNum">The sequence number in the sequence of pings to the hop point.</param>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.#ctor(System.String,System.String,System.Net.NetworkInformation.PingReply,System.UInt32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus"/> class.
+            </summary>
+            <param name="source">The source machine name or IP of the ping.</param>
+            <param name="destination">The destination machine name of the ping.</param>
+            <param name="reply">The response from the ping attempt.</param>
+            <param name="pingNum">The sequence number of the ping in the sequence of pings to the target.</param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Ping">
+            <summary>
+            Gets the sequence number of this ping in the sequence of pings to the <see cref="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Destination"/>
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Source">
+            <summary>
+            Gets the source from which the ping was sent.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Destination">
+            <summary>
+            Gets the destination which was pinged.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Address">
+            <summary>
+            Gets the target address of the ping.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.DisplayAddress">
+            <summary>
+            Gets the target address of the ping if one is available, or "*" if it is not.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Latency">
+            <summary>
+            Gets the roundtrip time of the ping in milliseconds.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Status">
+            <summary>
+            Gets the returned status of the ping.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.BufferSize">
+            <summary>
+            Gets the size in bytes of the buffer data sent in the ping.
+            </summary>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus.Reply">
+            <summary>
+            Gets the reply object from this ping.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.TestConnectionCommand.PingMtuStatus">
+            <summary>
+            The class contains information about the source, the destination and ping results.
+            </summary>
+        </member>
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.PingMtuStatus.#ctor(System.String,System.String,System.Net.NetworkInformation.PingReply,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.TestConnectionCommand.PingMtuStatus"/> class.
+            </summary>
+            <param name="source">The source machine name or IP of the ping.</param>
+            <param name="destination">The destination machine name of the ping.</param>
+            <param name="reply">The response from the ping attempt.</param>
+            <param name="bufferSize">The buffer size from the successful ping attempt.</param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingMtuStatus.MtuSize">
+            <summary>
+            Gets the maximum transmission unit size on the network path between the source and destination.
+            </summary>
+        </member>
+        <member name="T:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus">
             <summary>
             The class contains an information about a trace route attempt.
             </summary>
         </member>
-        <member name="F:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteReply.Hop">
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.#ctor(System.Int32,Microsoft.PowerShell.Commands.TestConnectionCommand.PingStatus,System.String,System.String,System.Net.IPAddress)">
             <summary>
-            Number of current hop (router).
+            Initializes a new instance of the <see cref="T:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus"/> class.
+            </summary>
+            <param name="hop">The hop number of this trace hop.</param>
+            <param name="status">The PingStatus response from this trace hop.</param>
+            <param name="source">The source computer name or IP address of the traceroute.</param>
+            <param name="destination">The target destination of the traceroute.</param>
+            <param name="destinationAddress">The target IPAddress of the overall traceroute.</param>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Hop">
+            <summary>
+            Gets the number of the current hop / router.
             </summary>
         </member>
-        <member name="F:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteReply.PingReplies">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Hostname">
             <summary>
-            List of ping replies for current hop (router).
+            Gets the hostname of the current hop point.
+            </summary>
+            <value></value>
+        </member>
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Ping">
+            <summary>
+            Gets the sequence number of the ping in the sequence of pings to the hop point.
             </summary>
         </member>
-        <member name="F:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteReply.ReplyRouterAddress">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.HopAddress">
             <summary>
-            Router IP address.
+            Gets the IP address of the current hop point.
             </summary>
         </member>
-        <member name="F:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteReply.ReplyRouterName">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Latency">
             <summary>
-            Resolved router name.
+            Gets the latency values of each ping to the current hop point.
             </summary>
         </member>
-        <member name="T:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteResult">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Status">
             <summary>
-            The class contains an information about the source, the destination and trace route results.
+            Gets the status of the traceroute hop.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteResult.Source">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Source">
             <summary>
-            Source from which to trace route.
+            Gets the source address of the traceroute command.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteResult.DestinationAddress">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Target">
             <summary>
-            Destination to which to trace route.
+            Gets the final destination hostname of the trace.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteResult.DestinationHost">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.TargetAddress">
             <summary>
-            Destination to which to trace route.
+            Gets the final destination IP address of the trace.
             </summary>
         </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceRouteResult.Replies">
+        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.TraceStatus.Reply">
             <summary>
+            Gets the raw PingReply object received from the ping to this hop point.
             </summary>
         </member>
-        <member name="T:Microsoft.PowerShell.Commands.TestConnectionCommand.PingReport">
+        <member name="M:Microsoft.PowerShell.Commands.TestConnectionCommand.Finalize">
             <summary>
-            The class contains an information about the source, the destination and ping results.
+            Finalizes an instance of the <see cref="T:Microsoft.PowerShell.Commands.TestConnectionCommand"/> class.
             </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingReport.Source">
-            <summary>
-            Source from which to ping.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingReport.Destination">
-            <summary>
-            Destination to which to ping.
-            </summary>
-        </member>
-        <member name="P:Microsoft.PowerShell.Commands.TestConnectionCommand.PingReport.Replies">
-            <summary>
-            Ping results for every ping attempt.
-            </summary>
-        </member>
-        <member name="F:Microsoft.PowerShell.Commands.TestConnectionCommand.DefaultSendBufferSize">
-            Create the default send buffer once and cache it.
         </member>
         <member name="T:Microsoft.PowerShell.Commands.GetTimeZoneCommand">
             <summary>
@@ -9084,10 +9364,226 @@
             otherwise.
             </returns>
         </member>
+        <member name="T:ClearRecycleBinResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:ClearRecycleBinResources.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.ClearRecycleBinContent">
+            <summary>
+              Looks up a localized string similar to 
+               All of the contents of the Recycle Bin
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.ClearRecycleBinContentForDrive">
+            <summary>
+              Looks up a localized string similar to 
+               All of the contents of the Recycle Bin for the '{0}' drive
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.ClearRecycleBinProgressActivity">
+            <summary>
+              Looks up a localized string similar to 
+               Clearing Recycle Bin
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.ClearRecycleBinStatusDescriptionByDrive">
+            <summary>
+              Looks up a localized string similar to 
+               for the '{0}' drive
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.ClearRecycleBinStatusDescriptionForAllDrives">
+            <summary>
+              Looks up a localized string similar to 
+               for all drives
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.DriveNotFound">
+            <summary>
+              Looks up a localized string similar to 
+               Cannot find drive. A drive with the name '{0}' does not exist. Please run the '{1}' cmdlet to see the available Fixed drives in the system.
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.InvalidDriveNameFormat">
+            <summary>
+              Looks up a localized string similar to 
+               Invalid input. The following formats are supported: '{0}', '{1}' or '{2}'.
+             
+            </summary>
+        </member>
+        <member name="P:ClearRecycleBinResources.InvalidDriveType">
+            <summary>
+              Looks up a localized string similar to 
+               The drive with the name '{0}' is not a Fixed drive and does not support the Recycle Bin. Please run the '{1}' cmdlet to see the available Fixed drives in the system.
+             
+            </summary>
+        </member>
+        <member name="T:ClipboardResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:ClipboardResources.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:ClipboardResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.SetClipboardContent">
+            <summary>
+              Looks up a localized string similar to 
+               Set string '{0}' to the clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.AppendClipboardContent">
+            <summary>
+              Looks up a localized string similar to 
+               Append string '{0}' to the clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.SetSingleFileToClipboard">
+            <summary>
+              Looks up a localized string similar to 
+               Set file '{0}' to the clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.AppendSingleFileToClipboard">
+            <summary>
+              Looks up a localized string similar to 
+               Append file '{0}' to the clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.SetMultipleFilesToClipboard">
+            <summary>
+              Looks up a localized string similar to 
+               Set {0} files to the clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.AppendMultipleFilesToClipboard">
+            <summary>
+              Looks up a localized string similar to 
+               Append {0} files to the clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.NoAppendableClipboardContent">
+            <summary>
+              Looks up a localized string similar to 
+               There's no content in Clipboard or the content format is not compatible. Set input object to the Clipboard.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.ClipboardCleared">
+            <summary>
+              Looks up a localized string similar to 
+               The Clipboard has been cleared.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.InvalidTypeCombine">
+            <summary>
+              Looks up a localized string similar to 
+               TextFormatType can only be combined with Text format.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.InvalidRawCombine">
+            <summary>
+              Looks up a localized string similar to 
+               Raw can only be combined with Text or FileDropList format.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.InvalidHtmlCombine">
+            <summary>
+              Looks up a localized string similar to 
+               Html can only be combined with Html Text format.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.UnsupportedFormat">
+            <summary>
+              Looks up a localized string similar to 
+               Only Text format is supported on this platform.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.UnsupportedPlatform">
+            <summary>
+              Looks up a localized string similar to 
+               The clipboard is not supported on this platform.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.AsHtmlUnsupported">
+            <summary>
+              Looks up a localized string similar to 
+               The '-AsHtml' switch is not supported on this platform.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.TextFormatUnsupported">
+            <summary>
+              Looks up a localized string similar to 
+               The '-TextFormatType' parameter only supports 'Text' on this platform.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.PathUnsupported">
+            <summary>
+              Looks up a localized string similar to 
+               The '-Path' parameter is not supported on this platform.
+             
+            </summary>
+        </member>
+        <member name="P:ClipboardResources.LiteralPathUnsupported">
+            <summary>
+              Looks up a localized string similar to 
+               The '-LiteralPath' parameter is not supported on this platform.
+             
+            </summary>
+        </member>
         <member name="T:CmdletizationResources">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:CmdletizationResources.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:CmdletizationResources.ResourceManager">
             <summary>
@@ -9310,6 +9806,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ComputerInfoResources.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ComputerInfoResources.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -9381,6 +9880,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:ComputerResources.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:ComputerResources.ResourceManager">
             <summary>
@@ -10012,10 +10514,39 @@
              
             </summary>
         </member>
+        <member name="T:HotFixResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="M:HotFixResources.#ctor">
+            <summary>constructor</summary>
+        </member>
+        <member name="P:HotFixResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:HotFixResources.Culture">
+            <summary>
+              Overrides the current threads CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:HotFixResources.NoEntriesFound">
+            <summary>
+              Looks up a localized string similar to 
+               Cannot find the requested hotfix on the '{0}' computer. Verify the input and run the command again.
+             
+            </summary>
+        </member>
         <member name="T:NavigationResources">
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:NavigationResources.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:NavigationResources.ResourceManager">
             <summary>
@@ -10201,6 +10732,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ProcessCommandHelpResources.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ProcessCommandHelpResources.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10268,6 +10802,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ProcessResources.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ProcessResources.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10283,6 +10820,13 @@
             <summary>
               Looks up a localized string similar to 
                Cannot find a process with the name "{0}". Verify the process name and call the cmdlet again.
+             
+            </summary>
+        </member>
+        <member name="P:ProcessResources.RecommendIdTagForGivenName">
+            <summary>
+              Looks up a localized string similar to 
+               Cannot find a process with the name "{0}". Try running with -Id to search by Id of processes.
              
             </summary>
         </member>
@@ -10408,7 +10952,7 @@
         <member name="P:ProcessResources.InvalidStartProcess">
             <summary>
               Looks up a localized string similar to 
-               This command cannot be run due to the error: {0}.
+               This command cannot be run due to the error: {0}
              
             </summary>
         </member>
@@ -10543,6 +11087,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:ServiceResources.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:ServiceResources.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10673,6 +11220,13 @@
              
             </summary>
         </member>
+        <member name="P:ServiceResources.CouldNotSetServiceSecurityDescriptorSddl">
+            <summary>
+              Looks up a localized string similar to 
+               Service '{0}' security descriptor cannot be configured due to the following error: {1}
+             
+            </summary>
+        </member>
         <member name="P:ServiceResources.CouldNotNewService">
             <summary>
               Looks up a localized string similar to 
@@ -10783,6 +11337,9 @@
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
         </member>
+        <member name="M:TestConnectionResources.#ctor">
+            <summary>constructor</summary>
+        </member>
         <member name="P:TestConnectionResources.ResourceManager">
             <summary>
               Returns the cached ResourceManager instance used by this class.
@@ -10792,62 +11349,6 @@
             <summary>
               Overrides the current threads CurrentUICulture property for all
               resource lookups using this strongly typed resource class.
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.TraceRouteStart">
-            <summary>
-              Looks up a localized string similar to 
-               Tracing route to {0} [{1}] over a maximum of {2} hops:
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.TraceRouteReply">
-            <summary>
-              Looks up a localized string similar to 
-               {0,3}   {1} ms   {2} ms   {3} ms   {4} [{5}]
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.TraceRouteTimeOut">
-            <summary>
-              Looks up a localized string similar to 
-               {0,3}   * ms   * ms   * ms   Request timed out.
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.TraceRouteComplete">
-            <summary>
-              Looks up a localized string similar to 
-               Trace complete.
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.ConnectionTestStart">
-            <summary>
-              Looks up a localized string similar to 
-               Trying to connect to {0} [{1}]:
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.ConnectionTestDescription">
-            <summary>
-              Looks up a localized string similar to 
-               Target: {0} [{1}]. Seconds: {2}
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.MTUSizeDetectStart">
-            <summary>
-              Looks up a localized string similar to 
-               Pinging {0} [{1}] with {2} bytes of data:
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.MTUSizeDetectDescription">
-            <summary>
-              Looks up a localized string similar to 
-               MTU size: {0}. Attempt: {1}
-             
             </summary>
         </member>
         <member name="P:TestConnectionResources.NoPingResult">
@@ -10871,31 +11372,10 @@
              
             </summary>
         </member>
-        <member name="P:TestConnectionResources.PingStart">
+        <member name="P:TestConnectionResources.MaxHopsExceeded">
             <summary>
               Looks up a localized string similar to 
-               Pinging {0} [{1}] with {2} bytes of data:
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.PingTimeOut">
-            <summary>
-              Looks up a localized string similar to 
-               Request timed out.
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.PingReply">
-            <summary>
-              Looks up a localized string similar to 
-               Reply from {0}: bytes={1} time={2}ms TTL={3}
-             
-            </summary>
-        </member>
-        <member name="P:TestConnectionResources.PingComplete">
-            <summary>
-              Looks up a localized string similar to 
-               Ping complete.
+               Cannot complete traceroute to destination '{0}': Number of hops required to reach host exceeds MaxHops ({1}).
              
             </summary>
         </member>
@@ -10903,6 +11383,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:TestPathResources.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:TestPathResources.ResourceManager">
             <summary>
@@ -10926,6 +11409,9 @@
             <summary>
               A strongly-typed resource class, for looking up localized strings, etc.
             </summary>
+        </member>
+        <member name="M:TimeZoneResources.#ctor">
+            <summary>constructor</summary>
         </member>
         <member name="P:TimeZoneResources.ResourceManager">
             <summary>
