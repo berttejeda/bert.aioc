@@ -57,5 +57,9 @@ Function List-Machine {
     
 }
 
-Set-Alias -Name machine.list  -Value List-Machine 
-Set-Alias -Name machine.list.aio  -Value List-Machine
+Function machine.list.aio {
+ List-Machine $Settings.defaults.aio_machine_name
+}
+
+Set-Alias -Name machine.list  -Value List-Machine
+
