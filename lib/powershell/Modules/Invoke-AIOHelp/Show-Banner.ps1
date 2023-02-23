@@ -11,22 +11,25 @@ function Show-Banner {
         Write-Host -NoNewLine "If this is your first time using this tool," -ForegroundColor Magenta -BackgroundColor Black
         Write-Host -NoNewLine " enter in the command: " -ForegroundColor Magenta -BackgroundColor Black
         Write-Host "Start-Tutorial" -ForegroundColor Blue -BackgroundColor Black
-        $AvailableCommands = Get-Command | Where-Object{$_.Source -in $AIOLoadedModules -and $_.Name -match "[\w]+\."}
-        $AvailableCommands += Get-Alias | Where-Object{$_.Source -in $AIOLoadedModules -and $_.Name -match "[\w]+\."}
-        $BannerOutput = "Name,Syntax`n"
+        $AIOLoadedModulesList = (Get-Module -ListAvailable | Where-Object {$_.path -like '*lib\*'}).name
+        $AvailableCommands = Get-Command | Where-Object{$_.Source -in $AIOLoadedModulesList}
+        $AvailableCommands += Get-Alias | Where-Object{$_.Source -in $AIOLoadedModulesList}
     }
 
     process {
 
-        ForEach ($Command in $AvailableCommands) {
-          if ($Command.CommandType -eq "Alias") {
-            $ParentCommand = $Command.ResolvedCommand
-            $CommandSyntax = (Get-Help $Command.Name).Synopsis.ToString().Trim() -Replace($ParentCommand,$Command.Name)
-          } else {
-            $CommandSyntax = (Get-Help $Command.Name).Synopsis.ToString().Trim()
-          }
-          $BannerOutput += "$($Command.Name),$CommandSyntax`n"
-        }
+        $BannerOutput = $AvailableCommands | Select-Object Name,CommandType,Version,Source,@{
+            l="Syntax";
+            e={
+              if ($_.CommandType -eq "Alias") {
+                $ParentCommand = $_.ResolvedCommand
+                $CommandSyntax = (Get-Help $_.Name).Synopsis.ToString().Trim() -Replace($ParentCommand,$_.Name)
+              } else {
+                $CommandSyntax = (Get-Help $_.Name).Synopsis.ToString().Trim()
+              }
+              $CommandSyntax         
+            }
+        } | Sort-Object Name | Format-Table
 
     }
 
@@ -60,8 +63,8 @@ function Show-Banner {
         Write-Host " flag"
         Write-Host "++++++++++++++++++++++++++++++++" -ForegroundColor Yellow -BackgroundColor Black
         if ($AllCommands){
-            Write-Host "# All Available Commands:" -ForegroundColor Green -BackgroundColor Black
-            $BannerOutput | ConvertFrom-CSV
+            Write-Host "All Available Commands:" -ForegroundColor Green -BackgroundColor Black
+            $BannerOutput | Out-Host –Paging
         }
     }
 } 
