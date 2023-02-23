@@ -11,17 +11,21 @@ Switch ($True) { (-not $(Get-Variable -name IsWindows)) { $Global:IsWindows = (-
 }
 if ($IsWindows) {$Global:MyMachineName = $env:computername} elseif ($IsLinux -or $IsMacOS) { $Global:MyMachineName = $env:HOSTNAME }
 $env:PSModulePath="$($env:PSModulePath);$PWD\lib\powershell\Modules;$HOME\git\self\powershell.Modules"
-Import-Module -Name "$PWD\lib\powershell\Meta\ScriptBlocks" -ErrorAction Stop -DisableNameChecking -force
-Import-Module -Name "$PWD\lib\powershell\Modules\Invoke-Logger" -ErrorAction Stop -DisableNameChecking -force
-Import-Module -Name "$PWD\lib\powershell\Modules\EPS" -ErrorAction Stop -DisableNameChecking -force
-Import-Module -Name "$PWD\lib\powershell\Modules\PSYaml" -ErrorAction Stop -DisableNameChecking -force
+Import-Module -Name "$PWD\lib\powershell\Meta\ScriptBlocks" -ErrorAction Stop -DisableNameChecking -force;$Global:AIOLoadedModules += "ScriptBlocks,"
+Import-Module -Name "$PWD\lib\powershell\Modules\Invoke-Logger" -ErrorAction Stop -DisableNameChecking -force;$Global:AIOLoadedModules += "Invoke-Logger,"
+Import-Module -Name "$PWD\lib\powershell\Modules\EPS" -ErrorAction Stop -DisableNameChecking -force;$Global:AIOLoadedModules += "EPS,"
+Import-Module -Name "$PWD\lib\powershell\Modules\PSYaml" -ErrorAction Stop -DisableNameChecking -force;$Global:AIOLoadedModules += "PSYaml,"
+
 function Import-PSModules() {
     Write-Host "Importing Powershell Modules from $($args[0]) ..." -ForegroundColor Yellow -BackgroundColor Black
     $ModuleObjects = Get-ChildItem -recurse "$($args[0])" -Include ('*.psd1', '*.psm1')
     $ModuleObjects  | ForEach-Object {
         try {
             Import-Module -Name $($_.Directory) -ErrorAction Stop -DisableNameChecking -force
-            Write-Host "Imported $($_.BaseName)" -ForegroundColor DarkYellow -BackgroundColor Black
+            if ($_.BaseName -notin $AIOLoadedModules){
+                Write-Host "Imported $($_.BaseName)" -ForegroundColor DarkYellow -BackgroundColor Black
+                $Global:AIOLoadedModules += "$($_.BaseName),"
+            }            
         } catch {
             Write-Debug "Skipped $($_.Directory) as it failed to import with error: $_"
         }
