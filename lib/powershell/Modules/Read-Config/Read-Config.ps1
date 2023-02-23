@@ -1,35 +1,3 @@
-<#
-.SYNOPSIS
-=============================================
-Created with: SAPIEN Technologies, Inc., PowerShell Studio 2012 v3.1.21
-Created on:   7/2/2014 6:18 PM
-Created by:   Bert Tejeda
-Organization:
-Email:
-Keywords:
-FUNCTION.......:  Read-Config
-PURPOSE........:  General purpose .ini configruation reader
-REQUIREMENTS...:  If modular form (.psm1), must import this module via Import-Module
-=============================================
-.DESCRIPTION
-Reads a .ini configruation file and imports all variables defined therein
-.INPUTS
-Path to Configuration file
-.OUTPUTS
-Hashtable
-Read-Config returns a hashtable
-.EXAMPLE
-Read-Config MyConfig.ini
-This command reads the specified .ini configuration file and creates PowerShell variables according to the Key=Value pairs
-#>
-# -----------------------------------------------------------------------------
-# Function      : Read-Config
-# -----------------------------------------------------------------------------
-# Description   : Reads the specified .ini configuration file
-# Parameters    : 
-# Returns       : Hashtable
-# Credits       : Bert Tejeda
-# -----------------------------------------------------------------------------
 Function Read-Config {
 [CmdletBinding()]             
 param ([Parameter(Mandatory=$True, 
