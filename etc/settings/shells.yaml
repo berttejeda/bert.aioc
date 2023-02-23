@@ -63,3 +63,47 @@ sublimetext3:
       "1. Go to the Sublime Text 3 download site: https://www.sublimetext.com/3"
       "2. Choose the latest release and download the installer"
       "3. Install"
+
+zsh:
+  apps:
+    - binary: <%= $env:LOCALAPPDATA %>\Programs\Git\usr\bin\zsh.exe
+  notfound: |-
+    "Could not find the zsh executable in any of the configured paths:"
+    $($($Settings.shells.zsh.apps) | %{"$($_.binary)`n"})
+    "You can install zsh as follows:
+      * Start a new PowerShell Terminal
+      * Install Chocolatey
+        Set-Variable -Name "ChocolateyInstallPath" -Value "$(Join-Path -Path $Env:LocalAppData -ChildPath chocolatey)"
+        New-Item $ChocolateyInstallPath -Type Directory -Force
+        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $ChocolateyInstallPath)
+        Set-ExecutionPolicy Bypass -Scope Process
+        Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+      * Install git-bash
+        choco install -y git
+      * Launch git bash, e.g.
+        <%= $env:LOCALAPPDATA %>\Programs\Git\git-bash.exe --cd-to-home
+      * Install gcc (via mingw)
+        choco install -y mingw
+      * Navigate to your downloads folder
+        cd $HOME\Downloads
+      * Download the zsh package (adjust version to your needs)
+        curl -ksO https://repo.msys2.org/msys/x86_64/zsh-5.9-2-x86_64.pkg.tar.zst
+      * Build zstd and untar + decompress the zsh package
+        CC=gcc make -C zstd
+        mkdir zsh && tar --use-compress-program=zstd/zstd.exe -xvf zsh-5.9-2-x86_64.pkg.tar.zst -C zsh
+      * Merge the zsh content to Git BASH directory
+        cp -R zsh/etc /
+        cp -R zsh/usr /
+      * Set up zsh
+        touch ~/.zshrc
+        echo "test -t && exec zsh" >> ~/.bashrc    
+      * Clean up and test zsh
+        rm -rf zsh zsh.tar.zst zstd
+        zsh --version
+      * Set up Oh My ZshPermalink
+        At this point you have zsh installed, next just set up Oh My Zsh the way you like.
+        * install oh my zsh
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+        * Install bert.zsh
+          source <(curl -Lks https://raw.githubusercontent.com/berttejeda/bert.zsh/master/.installer.sh)
+        * install plugins etc        
