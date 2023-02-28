@@ -26,7 +26,7 @@ The [console.ps1](console.ps1)
   the property's attributes. Example: <br />
   `$Settings.shells.git` corresponds to the git dictionary object in [etc/settings/shells.yaml](etc/settings/shells.yaml)<br />
   As such, this `$Settings.shells.git.apps` will return a list object comprised <br />
-  of dictionary objects with whose keys are `binary` and `command`.
+  of dictionary objects whose keys are `binary` and `command`.
 - Launches the default POSIX emulator (git-bash) 
 
 # How to use this project
